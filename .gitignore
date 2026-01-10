@@ -39,3 +39,13 @@
 
 # debug information files
 *.dwo
+
+# build directory
+/build/
+build/
+*.o
+*.a
+*.so
+*.dylib
+*.dll
+*.exe
