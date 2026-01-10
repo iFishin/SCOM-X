@@ -1,0 +1,79 @@
+name: Build and Test
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        qt-version: [6.5.0, 6.6.0]
+
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Install Qt
+      uses: jurplel/install-qt-action@v3
+      with:
+        version: ${{ matrix.qt-version }}
+        modules: 'qtserialport'
+    
+    - name: Install CMake
+      uses: cmake-actions/setup-cmake@v1
+      with:
+        version: '3.27'
+    
+    - name: Configure project (Windows)
+      if: runner.os == 'Windows'
+      shell: powershell
+      run: |
+        mkdir build
+        cd build
+        cmake .. -G "Visual Studio 17 2022" -A x64
+    
+    - name: Configure project (Linux/macOS)
+      if: runner.os != 'Windows'
+      run: |
+        mkdir build
+        cd build
+        cmake .. -DCMAKE_BUILD_TYPE=Release
+    
+    - name: Build (Windows)
+      if: runner.os == 'Windows'
+      working-directory: build
+      run: cmake --build . --config Release
+    
+    - name: Build (Linux/macOS)
+      if: runner.os != 'Windows'
+      working-directory: build
+      run: cmake --build . --config Release -j$(nproc)
+    
+    - name: Run tests
+      working-directory: build
+      run: ctest --verbose
+    
+    - name: Upload build artifacts (Windows)
+      if: runner.os == 'Windows' && matrix.qt-version == '6.6.0'
+      uses: actions/upload-artifact@v3
+      with:
+        name: SCOM-Windows-x64
+        path: build/bin/Release/SCOM.exe
+    
+    - name: Upload build artifacts (Linux)
+      if: runner.os == 'Linux' && matrix.qt-version == '6.6.0'
+      uses: actions/upload-artifact@v3
+      with:
+        name: SCOM-Linux-x64
+        path: build/bin/SCOM
+    
+    - name: Upload build artifacts (macOS)
+      if: runner.os == 'macOS' && matrix.qt-version == '6.6.0'
+      uses: actions/upload-artifact@v3
+      with:
+        name: SCOM-macOS
+        path: build/bin/SCOM

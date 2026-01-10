@@ -1,0 +1,46 @@
+name: Code Quality
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y clang-format clang-tidy
+    
+    - name: Check code format with clang-format
+      run: |
+        find src include -name "*.cpp" -o -name "*.h" | xargs clang-format --dry-run -i --Werror
+    
+    - name: Run clang-tidy
+      run: |
+        mkdir build
+        cd build
+        cmake ..
+        clang-tidy -p . ../src/*.cpp ../include/*.h -- -std=c++17 -I../include
+      continue-on-error: true
+
+  cppcheck:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Install cppcheck
+      run: sudo apt-get install -y cppcheck
+    
+    - name: Run cppcheck
+      run: |
+        cppcheck --enable=all --suppress=missingIncludeSystem \
+                  --error-exitcode=1 src/ include/
+      continue-on-error: true

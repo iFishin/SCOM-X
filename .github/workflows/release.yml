@@ -1,0 +1,133 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  release:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          - os: windows-latest
+            qt-version: '6.6.0'
+            artifact-name: SCOM-Windows-x64.zip
+          - os: ubuntu-latest
+            qt-version: '6.6.0'
+            artifact-name: SCOM-Linux-x64.tar.gz
+          - os: macos-latest
+            qt-version: '6.6.0'
+            artifact-name: SCOM-macOS.tar.gz
+
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Install Qt
+      uses: jurplel/install-qt-action@v3
+      with:
+        version: ${{ matrix.qt-version }}
+        modules: 'qtserialport'
+    
+    - name: Install CMake
+      uses: cmake-actions/setup-cmake@v1
+      with:
+        version: '3.27'
+    
+    - name: Build (Windows)
+      if: runner.os == 'Windows'
+      shell: powershell
+      run: |
+        mkdir build
+        cd build
+        cmake .. -G "Visual Studio 17 2022" -A x64 -DCMAKE_BUILD_TYPE=Release
+        cmake --build . --config Release
+        # 收集依赖库
+        windeployqt build/bin/Release/SCOM.exe --release
+    
+    - name: Build (Linux)
+      if: runner.os == 'Linux'
+      run: |
+        mkdir build
+        cd build
+        cmake .. -DCMAKE_BUILD_TYPE=Release
+        cmake --build . -j$(nproc)
+    
+    - name: Build (macOS)
+      if: runner.os == 'macOS'
+      run: |
+        mkdir build
+        cd build
+        cmake .. -DCMAKE_BUILD_TYPE=Release
+        cmake --build . -j$(nproc)
+        macdeployqt build/bin/SCOM.app -dmg
+    
+    - name: Create Release (Windows)
+      if: runner.os == 'Windows'
+      shell: powershell
+      run: |
+        cd build/bin/Release
+        7z a SCOM-Windows-x64.zip SCOM.exe *.dll
+        Move-Item SCOM-Windows-x64.zip ${{ github.workspace }}/
+    
+    - name: Create Release (Linux)
+      if: runner.os == 'Linux'
+      run: |
+        cd build
+        tar -czf SCOM-Linux-x64.tar.gz bin/SCOM
+        mv SCOM-Linux-x64.tar.gz ${{ github.workspace }}/
+    
+    - name: Create Release (macOS)
+      if: runner.os == 'macOS'
+      run: |
+        cd build
+        mv bin/SCOM.dmg ${{ github.workspace }}/SCOM-macOS.dmg
+    
+    - name: Create GitHub Release
+      uses: actions/create-release@v1
+      if: startsWith(github.ref, 'refs/tags/v')
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: ${{ github.ref }}
+        release_name: Release ${{ github.ref }}
+        body: |
+          ## Release Notes
+          
+          See [CHANGELOG.md](https://github.com/iFishin/SCOM-X/blob/main/CHANGELOG.md) for details.
+        draft: false
+        prerelease: false
+    
+    - name: Upload Release Assets (Windows)
+      if: runner.os == 'Windows' && startsWith(github.ref, 'refs/tags/v')
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: ${{ github.workspace }}/SCOM-Windows-x64.zip
+        asset_name: SCOM-Windows-x64.zip
+        asset_content_type: application/zip
+    
+    - name: Upload Release Assets (Linux)
+      if: runner.os == 'Linux' && startsWith(github.ref, 'refs/tags/v')
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: ${{ github.workspace }}/SCOM-Linux-x64.tar.gz
+        asset_name: SCOM-Linux-x64.tar.gz
+        asset_content_type: application/gzip
+    
+    - name: Upload Release Assets (macOS)
+      if: runner.os == 'macOS' && startsWith(github.ref, 'refs/tags/v')
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: ${{ github.workspace }}/SCOM-macOS.dmg
+        asset_name: SCOM-macOS.dmg
+        asset_content_type: application/octet-stream
