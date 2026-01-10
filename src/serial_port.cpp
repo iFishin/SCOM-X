@@ -8,8 +8,9 @@ SerialPort::SerialPort(QObject *parent)
 {
     connect(m_serialPort.get(), &QSerialPort::readyRead,
             this, &SerialPort::onDataReceived);
-    connect(m_serialPort.get(), QOverload<QSerialPort::SerialPortError>::of(&QSerialPort::error),
-            this, &SerialPort::onError);
+    // 使用字符串连接方式兼容 Qt 6 MSVC 编译
+    connect(m_serialPort.get(), SIGNAL(error(QSerialPort::SerialPortError)),
+            this, SLOT(onError(QSerialPort::SerialPortError)));
 }
 
 SerialPort::~SerialPort()
@@ -313,15 +314,6 @@ void SerialPort::onError(QSerialPort::SerialPortError error)
         break;
     case QSerialPort::OpenError:
         errorMsg = "Device already in use";
-        break;
-    case QSerialPort::ParityError:
-        errorMsg = "Parity error";
-        break;
-    case QSerialPort::FramingError:
-        errorMsg = "Framing error";
-        break;
-    case QSerialPort::BreakConditionError:
-        errorMsg = "Break condition error";
         break;
     case QSerialPort::WriteError:
         errorMsg = "Write error";

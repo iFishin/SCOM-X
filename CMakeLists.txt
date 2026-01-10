@@ -52,6 +52,11 @@ if(WIN32)
     # 设置 Windows 编译选项
     set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreadedDLL")
     
+    # MSVC 需要特殊编译选项来支持 C++17 和 Qt
+    if(MSVC)
+        target_compile_options(${PROJECT_NAME} PRIVATE /permissive- /Zc:__cplusplus)
+    endif()
+    
     # 设置输出文件
     set_target_properties(${PROJECT_NAME} PROPERTIES
         WIN32_EXECUTABLE ON
