@@ -18,18 +18,28 @@ find_package(Qt6 REQUIRED COMPONENTS
 # 源文件
 set(SOURCES
     src/main.cpp
-    src/main_window.cpp
+    ui/main_window.cpp
     src/serial_port.cpp
 )
 
 # 头文件
 set(HEADERS
-    include/main_window.h
+    ui/main_window.h
     include/serial_port.h
 )
 
+# 资源文件
+set(RESOURCES
+    resources/resources.qrc
+)
+
+# Windows 资源文件（应用图标）
+if(WIN32)
+    set(RESOURCES ${RESOURCES} resources/app.rc)
+endif()
+
 # 创建可执行文件
-add_executable(${PROJECT_NAME} ${SOURCES} ${HEADERS})
+add_executable(${PROJECT_NAME} ${SOURCES} ${HEADERS} ${RESOURCES})
 
 # 链接 Qt 库
 target_link_libraries(${PROJECT_NAME} PRIVATE
@@ -40,7 +50,10 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
 )
 
 # 包含目录
-target_include_directories(${PROJECT_NAME} PRIVATE ${CMAKE_SOURCE_DIR}/include)
+target_include_directories(${PROJECT_NAME} PRIVATE 
+    ${CMAKE_SOURCE_DIR}/include
+    ${CMAKE_SOURCE_DIR}/ui
+)
 
 # 设置输出目录
 set_target_properties(${PROJECT_NAME} PROPERTIES

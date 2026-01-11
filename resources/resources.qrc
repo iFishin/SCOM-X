@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<RCC>
+    <qresource prefix="/ui">
+        <file alias="style.qss">style.qss</file>
+    </qresource>
+    <qresource prefix="/icons">
+        <file alias="app.png">icons/app.png</file>
+    </qresource>
+</RCC>
