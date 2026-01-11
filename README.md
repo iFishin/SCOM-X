@@ -351,6 +351,33 @@ $env:Qt6_DIR = "C:\Qt\6.x.x\msvc2022_64"
 - 📚 [CMake 文档](https://cmake.org/documentation/)
 - 🐛 [问题反馈](https://github.com/iFishin/SCOM-X/issues)
 
+## 最近更新
+
+### v1.1.0 (2026-01-11)
+
+✨ **新功能**
+- 🎨 添加现代化 UI 样式表（Fusion 风格）
+- 🚀 自动部署 Qt 依赖（编译后自动运行 windeployqt）
+- 📦 生成的应用可直接在任何 Windows 环境运行
+
+🔧 **改进**
+- 优化 Windows 编译流程（推荐使用 MinGW + Ninja）
+- 改进按钮、输入框、文本编辑器外观
+- 更新 README 提供准确的编译指导
+
+🐛 **修复**
+- 解决 Qt 6 信号连接问题
+- 修复缺失的枚举值错误
+
+### v1.0.0 (2026-01-10)
+
+🎉 **初始版本**
+- ✅ 完整的串口通信功能
+- ✅ 支持多种数据格式 (ASCII/HEX/UTF-8)
+- ✅ 跨平台构建系统 (Windows/Linux/macOS)
+- ✅ CI/CD 工作流配置
+- ✅ 完整的代码文档和开发指南
+
 ## 许可证
 
 本项目采用 [MIT 许可证](LICENSE) - 详见 LICENSE 文件
