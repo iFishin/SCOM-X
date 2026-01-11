@@ -98,6 +98,11 @@ private:
     void setupUI();
 
     /**
+     * @brief 应用样式表
+     */
+    void applyStyles();
+
+    /**
      * @brief 连接信号和槽
      */
     void connectSignals();

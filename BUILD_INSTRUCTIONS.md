@@ -98,10 +98,7 @@ if ($LASTEXITCODE -ne 0) {
 
 Write-Host "✅ 编译成功！" -ForegroundColor Green
 Write-Host "📦 可执行文件位置: $(Get-Location)\bin\SCOM.exe" -ForegroundColor Cyan
-
-# 提示运行
-Write-Host ""
-Write-Host "运行应用: .\bin\SCOM.exe" -ForegroundColor Yellow
+Write-Host "⚡ 所有 Qt 依赖已自动部署（DLL、插件等）" -ForegroundColor Green
 ```
 
 运行脚本：
@@ -109,6 +106,8 @@ Write-Host "运行应用: .\bin\SCOM.exe" -ForegroundColor Yellow
 ```powershell
 .\build.ps1
 ```
+
+**自动部署特性** ✨：编译完成后，CMake 会自动执行 `windeployqt` 工具，将所有必需的 Qt DLL、插件和翻译文件复制到 `bin` 目录。这样生成的应用可以直接在任何 Windows 环境中运行，无需额外配置！
 
 ## 故障排除
 

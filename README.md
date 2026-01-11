@@ -59,19 +59,15 @@
 
 ## 快速开始
 
-### Windows
+### Windows (推荐使用 MinGW + Ninja)
 
 #### 1. 安装依赖
 
-```powershell
-# 使用 Chocolatey（如果已安装）
-choco install cmake git visualstudio2022community
-
-# 或从官方网站下载安装
-# - CMake: https://cmake.org/download/
-# - Visual Studio: https://visualstudio.microsoft.com/
-# - Qt: https://www.qt.io/download-open-source
-```
+**使用 Qt Online Installer 安装**:
+- Qt 6.10.1 (选择 mingw_64 版本)
+- MinGW 13.1.0
+- CMake 3.30+
+- Ninja
 
 #### 2. 克隆项目
 
@@ -80,24 +76,48 @@ git clone https://github.com/iFishin/SCOM-X.git
 cd SCOM-X
 ```
 
-#### 3. 构建项目
+#### 3. 设置编译环境
 
 ```powershell
-mkdir build
+# 添加 Qt 工具到环境变量
+$env:PATH = "D:\Qt\Tools\CMake_64\bin;D:\Qt\Tools\Ninja;D:\Qt\Tools\mingw1310_64\bin;$env:PATH"
+```
+
+#### 4. 编译项目
+
+```powershell
+mkdir build -Force
 cd build
-cmake .. -G "Visual Studio 17 2022" -A x64
+cmake .. -G Ninja `
+  -DQt6_DIR=D:/Qt/6.10.1/mingw_64/lib/cmake/Qt6 `
+  -DCMAKE_C_COMPILER=D:/Qt/Tools/mingw1310_64/bin/gcc.exe `
+  -DCMAKE_CXX_COMPILER=D:/Qt/Tools/mingw1310_64/bin/g++.exe
+
 cmake --build . --config Release
 ```
 
-#### 4. 运行程序
+**自动部署**: 编译完成后，CMake 会自动运行 `windeployqt` 工具，将所有 Qt DLL 和插件复制到 `bin` 目录。
+
+#### 5. 运行程序
 
 ```powershell
 .\bin\SCOM.exe
 ```
 
-### Linux (Ubuntu/Debian)
+**提示**: 生成的 `bin` 目录包含可独立运行的应用（所有依赖已包含）。
 
-#### 1. 安装依赖
+### Windows (使用 MSVC)
+
+**注意**: 需要安装 **MSVC 版本的 Qt**（不是 mingw_64 版本）
+
+```powershell
+mkdir build
+cd build
+cmake .. -G "Visual Studio 17 2022" -A x64 -DQt6_DIR=<Qt MSVC 安装路径>
+cmake --build . --config Release
+```
+
+### Linux (Ubuntu/Debian)
 
 ```bash
 sudo apt-get update

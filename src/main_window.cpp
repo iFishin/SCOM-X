@@ -19,6 +19,7 @@ MainWindow::MainWindow(QWidget *parent)
     resize(1000, 700);
 
     setupUI();
+    applyStyles();
     connectSignals();
     loadSettings();
 
@@ -170,6 +171,196 @@ void MainWindow::setupUI()
     statusBar()->addWidget(m_statusLabel, 1);
     statusBar()->addPermanentWidget(m_bytesSentLabel);
     statusBar()->addPermanentWidget(m_bytesReceivedLabel);
+}
+
+void MainWindow::applyStyles()
+{
+    // 设置应用程序样式表
+    QString styleSheet = R"(
+        /* 主窗口样式 */
+        QMainWindow {
+            background-color: #f5f5f5;
+        }
+        
+        /* 分组框 */
+        QGroupBox {
+            color: #333333;
+            border: 2px solid #cccccc;
+            border-radius: 6px;
+            margin-top: 10px;
+            padding-top: 10px;
+            font-weight: bold;
+            font-size: 11pt;
+        }
+        
+        QGroupBox::title {
+            subcontrol-origin: margin;
+            left: 10px;
+            padding: 0 3px 0 3px;
+        }
+        
+        /* 按钮样式 */
+        QPushButton {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 6px 12px;
+            font-weight: bold;
+            font-size: 10pt;
+        }
+        
+        QPushButton:hover {
+            background-color: #0056b3;
+        }
+        
+        QPushButton:pressed {
+            background-color: #003d82;
+        }
+        
+        QPushButton:disabled {
+            background-color: #cccccc;
+            color: #666666;
+        }
+        
+        /* 连接按钮特殊样式 */
+        QPushButton#connectButton {
+            background-color: #28a745;
+            min-width: 80px;
+        }
+        
+        QPushButton#connectButton:hover {
+            background-color: #218838;
+        }
+        
+        QPushButton#connectButton:pressed {
+            background-color: #1a6e2e;
+        }
+        
+        /* 文本编辑框 */
+        QTextEdit {
+            background-color: white;
+            color: #333333;
+            border: 1px solid #cccccc;
+            border-radius: 4px;
+            padding: 4px;
+            font-family: "Courier New", monospace;
+            font-size: 10pt;
+            selection-background-color: #007bff;
+        }
+        
+        /* 组合框 */
+        QComboBox {
+            background-color: white;
+            color: #333333;
+            border: 1px solid #cccccc;
+            border-radius: 4px;
+            padding: 4px;
+            font-size: 10pt;
+        }
+        
+        QComboBox::drop-down {
+            border: none;
+            width: 20px;
+        }
+        
+        QComboBox::down-arrow {
+            image: none;
+        }
+        
+        QComboBox:hover {
+            border: 1px solid #0078d4;
+            background-color: #f9f9f9;
+        }
+        
+        /* 数字输入框 */
+        QSpinBox, QDoubleSpinBox {
+            background-color: white;
+            color: #333333;
+            border: 1px solid #cccccc;
+            border-radius: 4px;
+            padding: 4px;
+            font-size: 10pt;
+        }
+        
+        QSpinBox:hover, QDoubleSpinBox:hover {
+            border: 1px solid #0078d4;
+        }
+        
+        /* 标签 */
+        QLabel {
+            color: #333333;
+            font-size: 10pt;
+        }
+        
+        /* 状态栏 */
+        QStatusBar {
+            background-color: #e8e8e8;
+            color: #333333;
+            border-top: 1px solid #cccccc;
+        }
+        
+        QStatusBar::item {
+            border: none;
+        }
+        
+        /* 滚动条 */
+        QScrollBar:vertical {
+            background-color: #f5f5f5;
+            width: 12px;
+            border: none;
+        }
+        
+        QScrollBar::handle:vertical {
+            background-color: #cccccc;
+            border-radius: 6px;
+            min-height: 20px;
+        }
+        
+        QScrollBar::handle:vertical:hover {
+            background-color: #999999;
+        }
+        
+        QScrollBar::handle:vertical:pressed {
+            background-color: #666666;
+        }
+        
+        QScrollBar::up-arrow:vertical, QScrollBar::down-arrow:vertical {
+            border: none;
+            width: 0px;
+            height: 0px;
+        }
+        
+        /* 分割线 */
+        QSplitter::handle {
+            background-color: #e8e8e8;
+        }
+        
+        QSplitter::handle:hover {
+            background-color: #d0d0d0;
+        }
+    )";
+    
+    qApp->setStyle("Fusion");
+    qApp->setStyleSheet(styleSheet);
+    
+    // 应用调色板
+    QPalette darkPalette;
+    darkPalette.setColor(QPalette::Window, QColor(245, 245, 245));
+    darkPalette.setColor(QPalette::WindowText, QColor(51, 51, 51));
+    darkPalette.setColor(QPalette::Base, QColor(255, 255, 255));
+    darkPalette.setColor(QPalette::AlternateBase, QColor(245, 245, 245));
+    darkPalette.setColor(QPalette::ToolTipBase, QColor(255, 255, 255));
+    darkPalette.setColor(QPalette::ToolTipText, QColor(51, 51, 51));
+    darkPalette.setColor(QPalette::Text, QColor(51, 51, 51));
+    darkPalette.setColor(QPalette::Button, QColor(245, 245, 245));
+    darkPalette.setColor(QPalette::ButtonText, QColor(51, 51, 51));
+    darkPalette.setColor(QPalette::BrightText, QColor(255, 255, 255));
+    darkPalette.setColor(QPalette::Link, QColor(0, 123, 255));
+    darkPalette.setColor(QPalette::Highlight, QColor(0, 123, 255));
+    darkPalette.setColor(QPalette::HighlightedText, QColor(255, 255, 255));
+    
+    qApp->setPalette(darkPalette);
 }
 
 void MainWindow::connectSignals()

@@ -62,6 +62,32 @@ if(WIN32)
         WIN32_EXECUTABLE ON
         VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
     )
+    
+    # Windows 上的自动部署（复制 Qt DLL 和插件）
+    if(Qt6_FOUND)
+        # 获取 Qt bin 目录
+        get_target_property(Qt6_QMAKE_EXECUTABLE Qt6::qmake IMPORTED_LOCATION)
+        get_filename_component(Qt6_BIN_DIR ${Qt6_QMAKE_EXECUTABLE} DIRECTORY)
+        
+        # 查找 windeployqt 工具
+        find_program(WINDEPLOYQT_EXECUTABLE 
+            NAMES windeployqt windeployqt6
+            HINTS ${Qt6_BIN_DIR}
+        )
+        
+        if(WINDEPLOYQT_EXECUTABLE)
+            # 添加自定义命令在编译后运行 windeployqt
+            add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+                COMMAND ${WINDEPLOYQT_EXECUTABLE} 
+                    --release 
+                    \"${CMAKE_BINARY_DIR}/bin/${PROJECT_NAME}.exe\"
+                COMMENT "Deploying Qt dependencies with windeployqt..."
+            )
+            message(STATUS "windeployqt found: ${WINDEPLOYQT_EXECUTABLE}")
+        else()
+            message(WARNING "windeployqt not found. You may need to manually deploy Qt libraries.")
+        endif()
+    endif()
 endif()
 
 # 启用测试
