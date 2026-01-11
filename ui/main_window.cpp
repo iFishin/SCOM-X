@@ -3,6 +3,7 @@
 
 #include <QVBoxLayout>
 #include <QHBoxLayout>
+#include <QGridLayout>
 #include <QGroupBox>
 #include <QLabel>
 #include <QApplication>
@@ -15,8 +16,15 @@
 #include <QComboBox>
 #include <QSpinBox>
 #include <QTextEdit>
+#include <QLineEdit>
 #include <QCheckBox>
 #include <QDir>
+#include <QMenu>
+#include <QMenuBar>
+#include <QAction>
+#include <QIntValidator>
+#include <QSpacerItem>
+#include <QDialog>
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -24,7 +32,7 @@ MainWindow::MainWindow(QWidget *parent)
 {
     setWindowTitle("SCOM-X - Serial Communication Tool");
     setWindowIcon(QIcon(":/icons/app.png"));
-    setGeometry(100, 100, 1200, 700);
+    setGeometry(100, 100, 1400, 800);
 
     // 创建中央窗口
     centralWidget = new QWidget(this);
@@ -32,6 +40,9 @@ MainWindow::MainWindow(QWidget *parent)
 
     // 应用样式
     applyStyles();
+
+    // 创建菜单栏
+    setupMenuBar();
 
     // 构建 UI
     setupUI();
@@ -53,6 +64,28 @@ MainWindow::MainWindow(QWidget *parent)
 }
 
 MainWindow::~MainWindow() = default;
+
+void MainWindow::setupMenuBar() {
+    // 文件菜单
+    QMenu *fileMenu = menuBar()->addMenu("&File");
+    
+    // 设置菜单
+    QMenu *settingsMenu = menuBar()->addMenu("&Settings");
+    QAction *preferencesAction = settingsMenu->addAction("&Preferences");
+    connect(preferencesAction, &QAction::triggered, this, &MainWindow::onPreferencesClicked);
+    settingsMenu->addSeparator();
+    QAction *exitAction = settingsMenu->addAction("&Exit");
+    connect(exitAction, &QAction::triggered, this, &QApplication::quit);
+    
+    // 工具菜单
+    QMenu *toolsMenu = menuBar()->addMenu("&Tools");
+    QAction *clearHistoryAction = toolsMenu->addAction("&Clear History");
+    
+    // 帮助菜单
+    QMenu *helpMenu = menuBar()->addMenu("&Help");
+    QAction *aboutAction = helpMenu->addAction("&About");
+    connect(aboutAction, &QAction::triggered, this, &MainWindow::onAboutAction);
+}
 
 void MainWindow::setupUI() {
     // 创建主容器和布局
@@ -129,6 +162,21 @@ void MainWindow::setupUI() {
 
     leftLayout->addWidget(commandGroupBox);
 
+    // --- 热键区 ---
+    hotkeysGroupBox = new QGroupBox("热键 (F1-F4)", this);
+    hotkeysLayout = new QGridLayout(hotkeysGroupBox);
+    hotkeysLayout->setSpacing(5);
+    
+    for (int i = 0; i < 4; ++i) {
+        QPushButton *btn = new QPushButton(QString("F%1").arg(i+1), this);
+        btn->setMinimumHeight(35);
+        hotkeyButtons.push_back(btn);
+        hotkeysLayout->addWidget(btn, i / 4, i % 4);
+        connect(btn, &QPushButton::clicked, this, [this, i]() { onHotkeyClicked(i); });
+    }
+    
+    leftLayout->addWidget(hotkeysGroupBox);
+
     // --- 接收数据区 ---
     receivedDataGroupBox = new QGroupBox("接收数据", this);
     QVBoxLayout *receivedLayout = new QVBoxLayout(receivedDataGroupBox);
@@ -147,51 +195,41 @@ void MainWindow::setupUI() {
 
     leftLayout->addWidget(receivedDataGroupBox, 1);
 
-    mainLayout->addWidget(leftPanel, 2);
+    mainLayout->addWidget(leftPanel, 1);
 
-    // ===== 右侧面板 (1/3 宽度) =====
+    // ===== 右侧面板 (1/2 宽度) =====
     rightPanel = new QWidget(this);
     rightLayout = new QVBoxLayout(rightPanel);
     rightLayout->setContentsMargins(5, 10, 10, 10);
     rightLayout->setSpacing(8);
 
-    // 按钮滚动区
-    buttonScrollArea = new QScrollArea(this);
-    buttonScrollArea->setWidgetResizable(true);
-    buttonScrollArea->setStyleSheet("QScrollArea { background-color: #ffffff; }");
-    buttonScrollArea->setHorizontalScrollBarPolicy(Qt::ScrollBarAsNeeded);
-    buttonScrollArea->setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
+    // 快捷指令滚动区
+    commandScrollArea = new QScrollArea(this);
+    commandScrollArea->setWidgetResizable(true);
+    commandScrollArea->setHorizontalScrollBarPolicy(Qt::ScrollBarAsNeeded);
+    commandScrollArea->setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
+    commandScrollArea->setFrameShape(QFrame::NoFrame);
+    commandScrollArea->setStyleSheet("QScrollArea { border: none; background-color: transparent; }");
 
-    // 按钮容器
-    buttonGroupBox = new QGroupBox("快捷命令", this);
-    QVBoxLayout *buttonGroupLayout = new QVBoxLayout(buttonGroupBox);
-    buttonGroupLayout->setSpacing(5);
-
-    // 示例快捷按钮
-    QStringList buttonLabels = {
-        "AT",           "ATI",           "ATE0",          "ATE1",
-        "AT+CFUN?",     "AT+COPS?",      "AT+CSQ",        "AT+CREG?",
-        "AT+CIMI",      "AT+CGSN",       "AT+CCID",       "AT+CCCID",
-        "AT#FWSWITCH=1","AT#FWSWITCH=2", "AT#MONI",       "AT#MONP",
-        "AT#MONU",      "AT#MONI RESET", "AT+CGDCONT?",   "AT+CGACT?"
-    };
-
-    for (const QString &label : buttonLabels) {
-        QPushButton *btn = new QPushButton(label, this);
-        btn->setMinimumHeight(35);
-        buttonGroupLayout->addWidget(btn);
-
-        connect(btn, &QPushButton::clicked, this, [this, label]() {
-            sendArea->setText(label);
-            onSendDataClicked();
-        });
-    }
-
-    buttonGroupLayout->addStretch();
-    buttonGroupBox->setLayout(buttonGroupLayout);
-    buttonScrollArea->setWidget(buttonGroupBox);
-
-    rightLayout->addWidget(buttonScrollArea);
+    // 快捷指令容器
+    commandTableGroupBox = new QGroupBox("快捷指令", this);
+    commandTableLayout = new QGridLayout(commandTableGroupBox);
+    commandTableLayout->setSpacing(5);
+    commandTableLayout->setContentsMargins(5, 5, 5, 5);
+    
+    // 表头
+    commandTableLayout->addWidget(new QLabel(""), 0, 0, Qt::AlignCenter);
+    commandTableLayout->addWidget(new QLabel("按钮"), 0, 1, Qt::AlignCenter);
+    commandTableLayout->addWidget(new QLabel("数据"), 0, 2, Qt::AlignCenter);
+    commandTableLayout->addWidget(new QLabel("HEX"), 0, 3, Qt::AlignCenter);
+    commandTableLayout->addWidget(new QLabel("加\n回\n车"), 0, 4, Qt::AlignCenter);
+    commandTableLayout->addWidget(new QLabel("间隔\n(ms)"), 0, 5, Qt::AlignCenter);
+    
+    // 使用动态行数创建表格
+    rebuildCommandTable(currentCommandRows);
+    
+    commandScrollArea->setWidget(commandTableGroupBox);
+    rightLayout->addWidget(commandScrollArea);
     mainLayout->addWidget(rightPanel, 1);
 }
 
@@ -360,6 +398,11 @@ void MainWindow::loadSettings() {
     
     QString stopBits = settings.value("stopBits", "1").toString();
     stopBitsComboBox->setCurrentText(stopBits);
+    
+    // 加载快捷指令行数设置
+    currentCommandRows = settings.value("commandRows", 10).toInt();
+    if (currentCommandRows < 1) currentCommandRows = 1;
+    if (currentCommandRows > maxCommandRows) currentCommandRows = maxCommandRows;
 
     onRefreshPorts();
 }
@@ -370,5 +413,179 @@ void MainWindow::saveSettings() {
     settings.setValue("dataBits", dataBitsComboBox->currentText());
     settings.setValue("parity", parityComboBox->currentText());
     settings.setValue("stopBits", stopBitsComboBox->currentText());
+    
+    // 保存快捷指令行数
+    settings.setValue("commandRows", currentCommandRows);
+    
+    // 保存快捷指令
+    for (int i = 0; i < (int)commandInputs.size(); ++i) {
+        settings.setValue(QString("command_%1_data").arg(i), commandInputs[i]->text());
+        settings.setValue(QString("command_%1_hex").arg(i), commandHexCheckboxes[i]->isChecked());
+        settings.setValue(QString("command_%1_end").arg(i), commandEndCheckboxes[i]->isChecked());
+        settings.setValue(QString("command_%1_interval").arg(i), commandIntervals[i]->text());
+    }
+    
     settings.sync();
+}
+
+void MainWindow::onQuickCommandButtonClicked(int index) {
+    if (index < (int)commandInputs.size()) {
+        QString data = commandInputs[index]->text();
+        if (!data.isEmpty()) {
+            if (serialPort && serialPort->isOpen()) {
+                serialPort->write(data, commandHexCheckboxes[index]->isChecked() ?
+                                 SerialPort::DataFormat::HEX :
+                                 SerialPort::DataFormat::ASCII);
+                bytesSentLabel->setText(QString("发送: %1 字节").arg(data.length()));
+            } else {
+                QMessageBox::warning(this, "错误", "串口未连接");
+            }
+        }
+    }
+}
+
+void MainWindow::onQuickCommandReturnPressed(int index) {
+    onQuickCommandButtonClicked(index);
+}
+
+void MainWindow::onHotkeyClicked(int index) {
+    if (index >= 0 && index < (int)commandInputs.size()) {
+        onQuickCommandButtonClicked(index);
+    }
+}
+
+void MainWindow::onSettingsAction() {
+    QMessageBox::information(this, "设置", "设置功能开发中...");
+}
+
+void MainWindow::onAboutAction() {
+    QMessageBox::about(this, "关于 SCOM-X",
+        "SCOM-X - 串口通信工具\n"
+        "版本: 1.0.0\n\n"
+        "一个功能强大的串口通信工具，支持多种数据格式和快捷指令。");
+}
+
+void MainWindow::onPreferencesClicked() {
+    // 创建偏好设置对话框
+    QDialog prefsDialog(this);
+    prefsDialog.setWindowTitle("偏好设置");
+    prefsDialog.setFixedSize(400, 200);
+    
+    QVBoxLayout *layout = new QVBoxLayout(&prefsDialog);
+    
+    // 快捷指令行数设置
+    QHBoxLayout *rowsLayout = new QHBoxLayout();
+    rowsLayout->addWidget(new QLabel("快捷指令行数:"));
+    QSpinBox *rowsSpinBox = new QSpinBox();
+    rowsSpinBox->setMinimum(1);
+    rowsSpinBox->setMaximum(maxCommandRows);
+    rowsSpinBox->setValue(currentCommandRows);
+    rowsLayout->addWidget(rowsSpinBox);
+    rowsLayout->addStretch();
+    layout->addLayout(rowsLayout);
+    
+    QLabel *tipsLabel = new QLabel("(1-30 行，修改后立即生效)");
+    tipsLabel->setStyleSheet("color: gray; font-size: 11px;");
+    layout->addWidget(tipsLabel);
+    
+    layout->addStretch();
+    
+    // 按钮
+    QHBoxLayout *buttonLayout = new QHBoxLayout();
+    QPushButton *okButton = new QPushButton("确定");
+    QPushButton *cancelButton = new QPushButton("取消");
+    buttonLayout->addStretch();
+    buttonLayout->addWidget(okButton);
+    buttonLayout->addWidget(cancelButton);
+    layout->addLayout(buttonLayout);
+    
+    connect(okButton, &QPushButton::clicked, &prefsDialog, &QDialog::accept);
+    connect(cancelButton, &QPushButton::clicked, &prefsDialog, &QDialog::reject);
+    
+    if (prefsDialog.exec() == QDialog::Accepted) {
+        int newRows = rowsSpinBox->value();
+        if (newRows != currentCommandRows) {
+            currentCommandRows = newRows;
+            rebuildCommandTable(currentCommandRows);
+            saveSettings();
+        }
+    }
+}
+
+void MainWindow::rebuildCommandTable(int rowCount) {
+    // 清除现有的数据行（保留表头第0行）
+    while (commandTableLayout->rowCount() > 1) {
+        for (int col = 0; col < 6; ++col) {
+            QLayoutItem *item = commandTableLayout->itemAtPosition(commandTableLayout->rowCount() - 1, col);
+            if (item) {
+                delete item->widget();
+                commandTableLayout->removeItem(item);
+            }
+        }
+    }
+    
+    // 清除向量中的指针
+    for (auto *checkbox : commandCheckboxes) delete checkbox;
+    for (auto *button : commandButtons) delete button;
+    for (auto *input : commandInputs) delete input;
+    for (auto *hexCheckbox : commandHexCheckboxes) delete hexCheckbox;
+    for (auto *endCheckbox : commandEndCheckboxes) delete endCheckbox;
+    for (auto *interval : commandIntervals) delete interval;
+    
+    commandCheckboxes.clear();
+    commandButtons.clear();
+    commandInputs.clear();
+    commandHexCheckboxes.clear();
+    commandEndCheckboxes.clear();
+    commandIntervals.clear();
+    
+    // 创建新的快捷指令行
+    for (int i = 0; i < rowCount; ++i) {
+        // 复选框
+        QCheckBox *checkbox = new QCheckBox();
+        commandCheckboxes.push_back(checkbox);
+        commandTableLayout->addWidget(checkbox, i+1, 0, Qt::AlignCenter);
+        
+        // 发送按钮
+        QPushButton *button = new QPushButton(QString("Send %1").arg(i+1));
+        button->setMaximumWidth(80);
+        commandButtons.push_back(button);
+        commandTableLayout->addWidget(button, i+1, 1);
+        connect(button, &QPushButton::clicked, this, [this, i]() { onQuickCommandButtonClicked(i); });
+        
+        // 数据输入框（占据尽可能多的空间）
+        QLineEdit *inputField = new QLineEdit();
+        inputField->setPlaceholderText("输入数据...");
+        commandInputs.push_back(inputField);
+        commandTableLayout->addWidget(inputField, i+1, 2);
+        connect(inputField, &QLineEdit::returnPressed, this, [this, i]() { onQuickCommandReturnPressed(i); });
+        
+        // HEX 复选框
+        QCheckBox *hexCheckbox = new QCheckBox();
+        hexCheckbox->setToolTip("以十六进制发送");
+        commandHexCheckboxes.push_back(hexCheckbox);
+        commandTableLayout->addWidget(hexCheckbox, i+1, 3, Qt::AlignCenter);
+        
+        // 加回车复选框
+        QCheckBox *endCheckbox = new QCheckBox();
+        endCheckbox->setChecked(true);
+        endCheckbox->setToolTip("自动添加换行符");
+        commandEndCheckboxes.push_back(endCheckbox);
+        commandTableLayout->addWidget(endCheckbox, i+1, 4, Qt::AlignCenter);
+        
+        // 间隔输入框
+        QLineEdit *intervalField = new QLineEdit();
+        intervalField->setMaximumWidth(50);
+        intervalField->setPlaceholderText("0");
+        intervalField->setAlignment(Qt::AlignCenter);
+        // 只允许数字输入
+        QIntValidator *validator = new QIntValidator(0, 99999, this);
+        intervalField->setValidator(validator);
+        commandIntervals.push_back(intervalField);
+        commandTableLayout->addWidget(intervalField, i+1, 5);
+    }
+    
+    // 添加伸缩项
+    commandTableLayout->addItem(new QSpacerItem(20, 40, QSizePolicy::Minimum, QSizePolicy::Expanding), 
+                                rowCount+1, 0, 1, 6);
 }

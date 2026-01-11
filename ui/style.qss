@@ -269,6 +269,11 @@ QGroupBox:focus {
     border-color: #00a86b;
 }
 
+/* ===== 滚动区域 ===== */
+QScrollArea {
+    border: none
+}
+
 /* ===== 滚动条样式 ===== */
 QScrollBar:vertical {
     width: 12px;
