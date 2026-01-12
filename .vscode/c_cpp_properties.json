@@ -6,6 +6,7 @@
                 "${workspaceFolder}/**",
                 "${workspaceFolder}/include",
                 "${workspaceFolder}/ui",
+                "${workspaceFolder}/build/SCOM_autogen/include",
                 "D:/Qt/6.10.1/mingw_64/include",
                 "D:/Qt/6.10.1/mingw_64/include/QtCore",
                 "D:/Qt/6.10.1/mingw_64/include/QtGui",

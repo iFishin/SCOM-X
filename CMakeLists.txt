@@ -15,6 +15,11 @@ find_package(Qt6 REQUIRED COMPONENTS
     SerialPort
 )
 
+# UI 文件（Qt Designer XML）
+set(UI_FILES
+    ui/main_window.ui
+)
+
 # 源文件
 set(SOURCES
     src/main.cpp
@@ -39,7 +44,7 @@ if(WIN32)
 endif()
 
 # 创建可执行文件
-add_executable(${PROJECT_NAME} ${SOURCES} ${HEADERS} ${RESOURCES})
+add_executable(${PROJECT_NAME} ${SOURCES} ${HEADERS} ${UI_FILES} ${RESOURCES})
 
 # 链接 Qt 库
 target_link_libraries(${PROJECT_NAME} PRIVATE

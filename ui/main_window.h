@@ -2,27 +2,24 @@
 #define SCOM_UI_MAIN_WINDOW_H
 
 #include <QMainWindow>
-#include <QComboBox>
-#include <QPushButton>
-#include <QTextEdit>
 #include <QCheckBox>
-#include <QSpinBox>
-#include <QLabel>
-#include <QStatusBar>
-#include <QScrollArea>
-#include <QGroupBox>
-#include <QVBoxLayout>
-#include <QGridLayout>
+#include <QPushButton>
 #include <QLineEdit>
 #include <memory>
 #include <vector>
 
 class SerialPort;
 
+// 前向声明 UI 类（由 Qt 自动生成）
+namespace Ui {
+    class MainWindow;
+}
+
 /**
  * @class MainWindow
  * @brief SCOM-X 主窗口类
  * 
+ * 主窗口类使用 Qt Designer 生成的 UI 文件（main_window.ui）
  * 提供串口通信的图形用户界面，采用左右分屏布局：
  * - 左侧：配置、命令、接收数据区、热键
  * - 右侧：可滚动的快捷指令表格
@@ -66,10 +63,7 @@ private slots:
     void onSettingChanged();
 
 private:
-    void setupUI();
-    void setupMenuBar();
-    void setupQuickCommands();
-    void setupHotkeys();
+    void setupDynamicUI();
     void connectSignals();
     void rebuildCommandTable(int rowCount);
     void applyStyles();
@@ -77,52 +71,10 @@ private:
     void saveSettings();
     void updateConnectionStatus(bool connected);
 
-    // 菜单和工具栏
-    QWidget *centralWidget;
-    
-    // ===== 左侧面板组件 =====
-    QWidget *leftPanel;
-    QVBoxLayout *leftLayout;
+    // UI 类指针（由 Qt 自动生成的 ui_main_window.h）
+    std::unique_ptr<Ui::MainWindow> ui;
 
-    // 串口配置区 (Settings GroupBox)
-    QGroupBox *settingsGroupBox;
-    QComboBox *portComboBox;
-    QSpinBox *baudRateSpinBox;
-    QComboBox *dataBitsComboBox;
-    QComboBox *parityComboBox;
-    QComboBox *stopBitsComboBox;
-    QPushButton *connectButton;
-    QPushButton *disconnectButton;
-    QPushButton *refreshButton;
-    QLabel *statusLabel;
-
-    // 命令发送区 (Command GroupBox)
-    QGroupBox *commandGroupBox;
-    QTextEdit *sendArea;
-    QCheckBox *hexModeCheckBox;
-    QPushButton *sendButton;
-    QPushButton *clearSendButton;
-
-    // 数据接收区 (Received Data GroupBox)
-    QGroupBox *receivedDataGroupBox;
-    QTextEdit *receiveArea;
-    QPushButton *clearReceiveButton;
-
-    // 热键区 (Hotkeys GroupBox)
-    QGroupBox *hotkeysGroupBox;
-    QGridLayout *hotkeysLayout;
-    std::vector<QPushButton*> hotkeyButtons;
-
-    // ===== 右侧面板组件 =====
-    QWidget *rightPanel;
-    QVBoxLayout *rightLayout;
-    
-    // 快捷指令组（可滚动表格）
-    QScrollArea *commandScrollArea;
-    QGroupBox *commandTableGroupBox;
-    QGridLayout *commandTableLayout;
-    
-    // 快捷指令行数据
+    // 动态创建的快捷指令组件（不在 UI 文件中定义）
     std::vector<QCheckBox*> commandCheckboxes;
     std::vector<QPushButton*> commandButtons;
     std::vector<QLineEdit*> commandInputs;
@@ -131,20 +83,16 @@ private:
     std::vector<QLineEdit*> commandIntervals;
     
     // 快捷指令行数设置
-    int currentCommandRows = 100;  // 当前行数
+    int currentCommandRows = 100;   // 当前行数
     int maxCommandRows = 300;       // 最大行数
 
-    // 底部状态栏
-    QLabel *connectionStatusLabel;
-    QLabel *bytesReceivedLabel;
-    QLabel *bytesSentLabel;
-    
-    // 串口对象
-    std::unique_ptr<SerialPort> serialPort;
-    
     // 统计数据
     int bytesReceived = 0;
     int bytesSent = 0;
+
+    // 串口对象
+    std::unique_ptr<SerialPort> serialPort;
 };
 
 #endif // SCOM_UI_MAIN_WINDOW_H
+
