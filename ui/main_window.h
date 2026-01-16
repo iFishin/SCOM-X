@@ -4,7 +4,7 @@
 #include <QMainWindow>
 #include <QCheckBox>
 #include <QPushButton>
-#include <QLineEdit>
+#include <QComboBox>
 #include <memory>
 #include <vector>
 

@@ -80,9 +80,20 @@ void MainWindow::setupDynamicUI() {
     // 配置停止位
     ui->stopBitsComboBox->addItems({"1", "1.5", "2"});
     
-    // 配置发送区
-    ui->sendArea->setPlaceholderText("输入要发送的数据...");
-    ui->sendArea->setMaximumHeight(80);
+    // 配置发送区（QComboBox with editable mode）
+    // 添加预设命令
+    QStringList presetCommands = {
+        "AT",
+        "AT+RST",
+        "AT+CWMODE=1",
+        "AT+CWJAP=",
+        "AT+CWLIF",
+        "AT+CIFSR",
+        "AT+CIPSTART="
+    };
+    ui->sendArea->addItems(presetCommands);
+    ui->sendArea->setCurrentIndex(-1);  // 初始为空
+    ui->sendArea->setMaximumHeight(30);
     
     // 配置接收区
     ui->receiveArea->setReadOnly(true);
@@ -188,7 +199,7 @@ void MainWindow::onSendDataClicked() {
         return;
     }
     
-    QString data = ui->sendArea->text();
+    QString data = ui->sendArea->currentText();
     if (data.isEmpty()) {
         QMessageBox::warning(this, "错误", "请输入要发送的数据");
         return;
@@ -208,7 +219,7 @@ void MainWindow::onClearReceiveArea() {
 }
 
 void MainWindow::onClearSendArea() {
-    ui->sendArea->clear();
+    ui->sendArea->setCurrentIndex(-1);  // 清空编辑框内容，但保留历史
 }
 
 void MainWindow::onRefreshPorts() {

@@ -158,12 +158,9 @@
         </property>
         <layout class="QVBoxLayout" name="commandLayout">
          <item>
-          <widget class="QComboBox" name="sendArea">
-           <property name="editable">
-            <bool>true</bool>
-           </property>
-           <property name="insertPolicy">
-            <enum>QComboBox::InsertAtTop</enum>
+          <widget class="QLineEdit" name="sendArea">
+           <property name="placeholderText">
+            <string>Enter command here...</string>
            </property>
           </widget>
          </item>
@@ -217,7 +214,7 @@
          </size>
         </property>
         <property name="title">
-         <string>Hotkeys (F1-F4)</string>
+         <string>Hotkeys</string>
         </property>
         <layout class="QGridLayout" name="hotkeysLayout">
          <item row="0" column="3">
