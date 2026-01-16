@@ -188,7 +188,7 @@ void MainWindow::onSendDataClicked() {
         return;
     }
     
-    QString data = ui->sendArea->toPlainText();
+    QString data = ui->sendArea->text();
     if (data.isEmpty()) {
         QMessageBox::warning(this, "错误", "请输入要发送的数据");
         return;
