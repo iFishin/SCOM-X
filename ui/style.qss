@@ -578,40 +578,81 @@ QSpinBox, QDoubleSpinBox {
     background-color: white;
     font-size: 13px;
     color: #495057;
+    padding-right: 35px;
 }
 
 QSpinBox:focus, QDoubleSpinBox:focus {
     border-color: #007bff;
+    background-color: #f8f9fa;
 }
 
 QSpinBox:hover, QDoubleSpinBox:hover {
     border-color: #80bdff;
 }
 
-QSpinBox::up-button, QDoubleSpinBox::up-button {
-    subcontrol-origin: border;
-    subcontrol-position: top right;
-    width: 20px;
-    height: 10px;
-    border-left: 2px solid #ced4da;
+QSpinBox:disabled, QDoubleSpinBox:disabled {
     background-color: #f8f9fa;
+    color: #adb5bd;
+    border-color: #e9ecef;
+}
+
+/* 上下箭头按钮容器 */
+QSpinBox::up-button, QDoubleSpinBox::up-button,
+QSpinBox::down-button, QDoubleSpinBox::down-button {
+    subcontrol-origin: border;
+    width: 28px;
+    border: none;
+    background-color: transparent;
+    margin: 1px;
+}
+
+/* 上箭头按钮 */
+QSpinBox::up-button, QDoubleSpinBox::up-button {
+    subcontrol-position: top right;
+    height: 14px;
+    border-top-right-radius: 4px;
 }
 
 QSpinBox::up-button:hover, QDoubleSpinBox::up-button:hover {
-    background-color: #007bff;
+    background-color: #e8f5e8;
 }
 
+QSpinBox::up-button:pressed, QDoubleSpinBox::up-button:pressed {
+    background-color: #00a86b;
+}
+
+/* 下箭头按钮 */
 QSpinBox::down-button, QDoubleSpinBox::down-button {
-    subcontrol-origin: border;
     subcontrol-position: bottom right;
-    width: 20px;
-    height: 10px;
-    border-left: 2px solid #ced4da;
-    background-color: #f8f9fa;
+    height: 14px;
+    border-bottom-right-radius: 4px;
 }
 
 QSpinBox::down-button:hover, QDoubleSpinBox::down-button:hover {
-    background-color: #007bff;
+    background-color: #e8f5e8;
+}
+
+QSpinBox::down-button:pressed, QDoubleSpinBox::down-button:pressed {
+    background-color: #00a86b;
+}
+
+/* 禁用状态的箭头 */
+QSpinBox::up-button:disabled, QDoubleSpinBox::up-button:disabled,
+QSpinBox::down-button:disabled, QDoubleSpinBox::down-button:disabled {
+    background-color: transparent;
+}
+
+/* 箭头图标样式 */
+QSpinBox::up-arrow, QDoubleSpinBox::up-arrow {
+    image: url(:/icons/up-arrow.png);
+    width: 6px;
+    height: 6px;
+}
+
+QSpinBox::down-arrow, QDoubleSpinBox::down-arrow {
+    image: url(:/icons/down-arrow.png);
+    width: 6px;
+    height: 6px;
 }
 
 /* ===== 文本浏览器 ===== */
