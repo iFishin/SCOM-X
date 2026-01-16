@@ -578,13 +578,8 @@ QSpinBox, QDoubleSpinBox {
     background-color: white;
     font-size: 13px;
     color: #495057;
-    padding-right: 35px;
 }
 
-QSpinBox:focus, QDoubleSpinBox:focus {
-    border-color: #007bff;
-    background-color: #f8f9fa;
-}
 
 QSpinBox:hover, QDoubleSpinBox:hover {
     border-color: #80bdff;
@@ -601,8 +596,7 @@ QSpinBox::up-button, QDoubleSpinBox::up-button,
 QSpinBox::down-button, QDoubleSpinBox::down-button {
     subcontrol-origin: border;
     width: 28px;
-    border: none;
-    background-color: transparent;
+    border: 2px solid #ced4da;
     margin: 1px;
 }
 
@@ -640,19 +634,6 @@ QSpinBox::down-button:pressed, QDoubleSpinBox::down-button:pressed {
 QSpinBox::up-button:disabled, QDoubleSpinBox::up-button:disabled,
 QSpinBox::down-button:disabled, QDoubleSpinBox::down-button:disabled {
     background-color: transparent;
-}
-
-/* 箭头图标样式 */
-QSpinBox::up-arrow, QDoubleSpinBox::up-arrow {
-    image: url(:/icons/up-arrow.png);
-    width: 6px;
-    height: 6px;
-}
-
-QSpinBox::down-arrow, QDoubleSpinBox::down-arrow {
-    image: url(:/icons/down-arrow.png);
-    width: 6px;
-    height: 6px;
 }
 
 /* ===== 文本浏览器 ===== */

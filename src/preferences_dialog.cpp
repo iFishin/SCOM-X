@@ -4,7 +4,6 @@
 #include <QHBoxLayout>
 #include <QGroupBox>
 #include <QLabel>
-#include <QSerialPortInfo>
 #include <QDebug>
 
 PreferencesDialog::PreferencesDialog(QWidget *parent, ConfigManager *configManager)
@@ -22,34 +21,9 @@ PreferencesDialog::~PreferencesDialog() {
 void PreferencesDialog::setupUI() {
     QVBoxLayout *mainLayout = new QVBoxLayout(this);
 
-    // 串口设置分组
-    QGroupBox *serialGroupBox = new QGroupBox("串口设置", this);
+    // 串口设置分组（波特率和端口在主界面配置）
+    QGroupBox *serialGroupBox = new QGroupBox("串口高级设置", this);
     QVBoxLayout *serialLayout = new QVBoxLayout();
-
-    // 端口选择
-    QHBoxLayout *portLayout = new QHBoxLayout();
-    portLayout->addWidget(new QLabel("端口:"));
-    portComboBox = new QComboBox();
-
-    // 填充可用端口
-    for (const QSerialPortInfo &info : QSerialPortInfo::availablePorts()) {
-        portComboBox->addItem(info.portName());
-    }
-
-    portLayout->addWidget(portComboBox);
-    portLayout->addStretch();
-    serialLayout->addLayout(portLayout);
-
-    // 波特率
-    QHBoxLayout *baudLayout = new QHBoxLayout();
-    baudLayout->addWidget(new QLabel("波特率:"));
-    baudRateSpinBox = new QSpinBox();
-    baudRateSpinBox->setMinimum(300);
-    baudRateSpinBox->setMaximum(921600);
-    baudRateSpinBox->setSingleStep(1000);
-    baudLayout->addWidget(baudRateSpinBox);
-    baudLayout->addStretch();
-    serialLayout->addLayout(baudLayout);
 
     // 数据位
     QHBoxLayout *dataBitsLayout = new QHBoxLayout();
@@ -127,9 +101,7 @@ void PreferencesDialog::loadSettings() {
         return;
     }
 
-    // 加载串口设置
-    portComboBox->setCurrentText(configManager->getSerialPort());
-    baudRateSpinBox->setValue(configManager->getBaudRate());
+    // 加载串口高级设置（端口和波特率在主界面配置）
     dataBitsComboBox->setCurrentText(QString::number(configManager->getDataBits()));
     parityComboBox->setCurrentText(configManager->getParity());
     stopBitsComboBox->setCurrentText(configManager->getStopBits());
@@ -145,9 +117,7 @@ void PreferencesDialog::applySettings() {
         return;
     }
 
-    // 应用串口设置
-    configManager->setSerialPort(portComboBox->currentText());
-    configManager->setBaudRate(baudRateSpinBox->value());
+    // 应用串口高级设置（端口和波特率在主界面配置）
     configManager->setDataBits(dataBitsComboBox->currentText().toInt());
     configManager->setParity(parityComboBox->currentText());
     configManager->setStopBits(stopBitsComboBox->currentText());

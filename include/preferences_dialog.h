@@ -27,9 +27,7 @@ private:
     void loadSettings();
     void applySettings();
 
-    // 串口设置控件
-    QComboBox *portComboBox;
-    QSpinBox *baudRateSpinBox;
+    // 串口设置控件（波特率和端口在主界面配置）
     QComboBox *dataBitsComboBox;
     QComboBox *parityComboBox;
     QComboBox *stopBitsComboBox;
