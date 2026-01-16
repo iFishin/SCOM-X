@@ -25,12 +25,16 @@ set(SOURCES
     src/main.cpp
     ui/main_window.cpp
     src/serial_port.cpp
+    src/config_manager.cpp
+    src/preferences_dialog.cpp
 )
 
 # 头文件
 set(HEADERS
     ui/main_window.h
     include/serial_port.h
+    include/config_manager.h
+    include/preferences_dialog.h
 )
 
 # 资源文件

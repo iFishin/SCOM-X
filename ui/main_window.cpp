@@ -1,6 +1,8 @@
 #include "main_window.h"
 #include "ui_main_window.h"
 #include "serial_port.h"
+#include "config_manager.h"
+#include "preferences_dialog.h"
 
 #include <QVBoxLayout>
 #include <QHBoxLayout>
@@ -30,8 +32,12 @@
 #include <QTextCursor>
 
 MainWindow::MainWindow(QWidget *parent)
-    : QMainWindow(parent), ui(std::make_unique<Ui::MainWindow>()), serialPort(std::make_unique<SerialPort>())
+    : QMainWindow(parent), ui(std::make_unique<Ui::MainWindow>()), 
+      configManager(std::make_unique<ConfigManager>()), serialPort(std::make_unique<SerialPort>())
 {
+    // 初始化配置管理器
+    configManager->initialize();
+
     // 从 .ui 文件生成的 UI 代码（由 Qt 自动生成）
     ui->setupUi(this);
 
@@ -48,8 +54,8 @@ MainWindow::MainWindow(QWidget *parent)
     loadSettings();
 
     // 初始化状态栏
-    QLabel *bytesReceivedLabel = new QLabel("接收: 0 字节", this);
-    QLabel *bytesSentLabel = new QLabel("发送: 0 字节", this);
+    QLabel *bytesReceivedLabel = new QLabel("Rec: 0 Bytes", this);
+    QLabel *bytesSentLabel = new QLabel("Sent: 0 Bytes", this);
 
     statusBar()->addPermanentWidget(bytesReceivedLabel);
     statusBar()->addPermanentWidget(bytesSentLabel);
@@ -59,7 +65,12 @@ MainWindow::MainWindow(QWidget *parent)
     bytesSent = 0;
 }
 
-MainWindow::~MainWindow() = default;
+MainWindow::~MainWindow() {
+    // 保存配置
+    if (configManager) {
+        configManager->saveConfig();
+    }
+}
 
 void MainWindow::setupDynamicUI()
 {
@@ -112,6 +123,7 @@ void MainWindow::connectSignals()
     connect(ui->disconnectButton, &QPushButton::clicked, this, &MainWindow::onDisconnectClicked);
     connect(ui->clearReceiveButton, &QPushButton::clicked, this, &MainWindow::onClearReceiveArea);
     connect(ui->refreshButton, &QPushButton::clicked, this, &MainWindow::onRefreshPorts);
+    connect(ui->moreSettingsButton, &QPushButton::clicked, this, &MainWindow::onPreferencesClicked);
 
     // 连接菜单信号
     connect(ui->actionPreferences, &QAction::triggered, this, &MainWindow::onPreferencesClicked);
@@ -306,55 +318,65 @@ void MainWindow::closeEvent(QCloseEvent *event)
 
 void MainWindow::loadSettings()
 {
-    QSettings settings("SCOM-X", "SCOM-X");
+    // 从配置管理器加载设置
+    if (!configManager) {
+        qWarning() << "[MainWindow] ConfigManager not initialized";
+        return;
+    }
 
-    QString baudRate = settings.value("baudRate", "115200").toString();
-    ui->baudRateSpinBox->setCurrentText(baudRate);
-
-    QString dataBits = settings.value("dataBits", "8").toString();
-    ui->dataBitsComboBox->setCurrentText(dataBits);
-
-    QString parity = settings.value("parity", "None").toString();
-    ui->parityComboBox->setCurrentText(parity);
-
-    QString stopBits = settings.value("stopBits", "1").toString();
-    ui->stopBitsComboBox->setCurrentText(stopBits);
+    // 加载串口设置
+    ui->portComboBox->setCurrentText(configManager->getSerialPort());
+    ui->baudRateSpinBox->setCurrentText(QString::number(configManager->getBaudRate()));
+    ui->dataBitsComboBox->setCurrentText(QString::number(configManager->getDataBits()));
+    ui->parityComboBox->setCurrentText(configManager->getParity());
+    ui->stopBitsComboBox->setCurrentText(configManager->getStopBits());
+    ui->terminalHexMode->setChecked(configManager->getHexMode());
 
     // 加载快捷指令行数设置
-    currentCommandRows = settings.value("commandRows", 10).toInt();
+    currentCommandRows = configManager->getCommandRows();
     if (currentCommandRows < 1)
         currentCommandRows = 1;
     if (currentCommandRows > maxCommandRows)
         currentCommandRows = maxCommandRows;
 
-    // 加载快捷指令数据
+    // 加载快捷指令数据（从 QSettings 作为备用）
+    QSettings qsettings("SCOM-X", "SCOM-X");
     for (int i = 0; i < (int)commandInputs.size(); ++i)
     {
-        QString data = settings.value(QString("command_%1_data").arg(i), "").toString();
+        QString data = qsettings.value(QString("command_%1_data").arg(i), "").toString();
         if (!data.isEmpty())
         {
             commandInputs[i]->setText(data);
-            commandHexCheckboxes[i]->setChecked(settings.value(QString("command_%1_hex").arg(i), false).toBool());
-            commandEndCheckboxes[i]->setChecked(settings.value(QString("command_%1_end").arg(i), true).toBool());
-            commandIntervals[i]->setText(settings.value(QString("command_%1_interval").arg(i), "0").toString());
+            commandHexCheckboxes[i]->setChecked(qsettings.value(QString("command_%1_hex").arg(i), false).toBool());
+            commandEndCheckboxes[i]->setChecked(qsettings.value(QString("command_%1_end").arg(i), true).toBool());
+            commandIntervals[i]->setText(qsettings.value(QString("command_%1_interval").arg(i), "0").toString());
         }
     }
 
+    qDebug() << "[MainWindow] Settings loaded from ConfigManager";
     onRefreshPorts();
 }
 
 void MainWindow::saveSettings()
 {
-    QSettings settings("SCOM-X", "SCOM-X");
-    settings.setValue("baudRate", ui->baudRateSpinBox->currentText());
-    settings.setValue("dataBits", ui->dataBitsComboBox->currentText());
-    settings.setValue("parity", ui->parityComboBox->currentText());
-    settings.setValue("stopBits", ui->stopBitsComboBox->currentText());
+    // 保存到 ConfigManager
+    if (!configManager) {
+        qWarning() << "[MainWindow] ConfigManager not available for saving";
+        return;
+    }
 
-    // 保存快捷指令行数
+    configManager->setSerialPort(ui->portComboBox->currentText());
+    configManager->setBaudRate(ui->baudRateSpinBox->currentText().toInt());
+    configManager->setDataBits(ui->dataBitsComboBox->currentText().toInt());
+    configManager->setParity(ui->parityComboBox->currentText());
+    configManager->setStopBits(ui->stopBitsComboBox->currentText());
+    configManager->setHexMode(ui->terminalHexMode->isChecked());
+    configManager->setCommandRows(currentCommandRows);
+
+    // 同时保存快捷指令到 QSettings（作为备用）
+    QSettings settings("SCOM-X", "SCOM-X");
     settings.setValue("commandRows", currentCommandRows);
 
-    // 保存快捷指令
     for (int i = 0; i < (int)commandInputs.size(); ++i)
     {
         settings.setValue(QString("command_%1_data").arg(i), commandInputs[i]->text());
@@ -364,6 +386,9 @@ void MainWindow::saveSettings()
     }
 
     settings.sync();
+    configManager->saveConfig();
+
+    qDebug() << "[MainWindow] Settings saved to ConfigManager and QSettings";
 }
 
 void MainWindow::onQuickCommandButtonClicked(int index)
@@ -415,52 +440,9 @@ void MainWindow::onAboutAction()
 
 void MainWindow::onPreferencesClicked()
 {
-    // 创建偏好设置对话框
-    QDialog prefsDialog(this);
-    prefsDialog.setWindowTitle("偏好设置");
-    prefsDialog.setFixedSize(400, 200);
-
-    QVBoxLayout *layout = new QVBoxLayout(&prefsDialog);
-
-    // 快捷指令行数设置
-    QHBoxLayout *rowsLayout = new QHBoxLayout();
-    rowsLayout->addWidget(new QLabel("快捷指令行数:"));
-    QSpinBox *rowsSpinBox = new QSpinBox();
-    rowsSpinBox->setMinimum(1);
-    rowsSpinBox->setMaximum(maxCommandRows);
-    rowsSpinBox->setValue(currentCommandRows);
-    rowsLayout->addWidget(rowsSpinBox);
-    rowsLayout->addStretch();
-    layout->addLayout(rowsLayout);
-
-    QLabel *tipsLabel = new QLabel("(1-30 行，修改后立即生效)");
-    tipsLabel->setStyleSheet("color: gray; font-size: 11px;");
-    layout->addWidget(tipsLabel);
-
-    layout->addStretch();
-
-    // 按钮
-    QHBoxLayout *buttonLayout = new QHBoxLayout();
-    QPushButton *okButton = new QPushButton("确定");
-    QPushButton *cancelButton = new QPushButton("取消");
-    buttonLayout->addStretch();
-    buttonLayout->addWidget(okButton);
-    buttonLayout->addWidget(cancelButton);
-    layout->addLayout(buttonLayout);
-
-    connect(okButton, &QPushButton::clicked, &prefsDialog, &QDialog::accept);
-    connect(cancelButton, &QPushButton::clicked, &prefsDialog, &QDialog::reject);
-
-    if (prefsDialog.exec() == QDialog::Accepted)
-    {
-        int newRows = rowsSpinBox->value();
-        if (newRows != currentCommandRows)
-        {
-            currentCommandRows = newRows;
-            rebuildCommandTable(currentCommandRows);
-            saveSettings();
-        }
-    }
+    // 创建首选项对话框（带 DTR, RTS, 流控制等串口设置）
+    PreferencesDialog preferencesDialog(this, configManager.get());
+    preferencesDialog.exec();
 }
 
 void MainWindow::rebuildCommandTable(int rowCount)
@@ -518,7 +500,7 @@ void MainWindow::rebuildCommandTable(int rowCount)
 
         // 数据输入框（占据尽可能多的空间）
         QLineEdit *inputField = new QLineEdit();
-        inputField->setPlaceholderText("输入数据...");
+        inputField->setPlaceholderText("Input command...");
         commandInputs.push_back(inputField);
         ui->commandTableLayout->addWidget(inputField, i + 1, 2);
         connect(inputField, &QLineEdit::returnPressed, this, [this, i]()

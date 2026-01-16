@@ -9,6 +9,8 @@
 #include <vector>
 
 class SerialPort;
+class ConfigManager;
+class PreferencesDialog;
 
 // 前向声明 UI 类（由 Qt 自动生成）
 namespace Ui {
@@ -71,6 +73,12 @@ private:
 
     // UI 类指针（由 Qt 自动生成的 ui_main_window.h）
     std::unique_ptr<Ui::MainWindow> ui;
+
+    // 配置管理器
+    std::unique_ptr<ConfigManager> configManager;
+    
+    // 首选项对话框
+    std::unique_ptr<PreferencesDialog> preferencesDialog;
 
     // 动态创建的快捷指令组件（不在 UI 文件中定义）
     std::vector<QCheckBox*> commandCheckboxes;
