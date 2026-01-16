@@ -65,10 +65,20 @@ void MainWindow::setupDynamicUI() {
     // 配置端口下拉框
     ui->portComboBox->setMinimumWidth(100);
     
-    // 配置波特率
-    ui->baudRateSpinBox->setMinimum(300);
-    ui->baudRateSpinBox->setMaximum(921600);
-    ui->baudRateSpinBox->setValue(115200);
+    // 配置波特率（QComboBox with editable mode）
+    QStringList commonBaudRates = {
+        "9600",
+        "19200",
+        "38400",
+        "57600",
+        "115200",
+        "230400",
+        "460800",
+        "921600"
+    };
+    ui->baudRateSpinBox->addItems(commonBaudRates);
+    ui->baudRateSpinBox->setCurrentText("115200");  // 设置默认值
+    ui->baudRateSpinBox->setMaximumWidth(120);
     
     // 配置数据位
     ui->dataBitsComboBox->addItems({"5", "6", "7", "8"});
@@ -124,7 +134,7 @@ void MainWindow::connectSignals() {
     // 连接设置变化
     connect(ui->portComboBox, QOverload<int>::of(&QComboBox::currentIndexChanged), 
             this, &MainWindow::onSettingChanged);
-    connect(ui->baudRateSpinBox, QOverload<int>::of(&QSpinBox::valueChanged),
+    connect(ui->baudRateSpinBox, QOverload<int>::of(&QComboBox::currentIndexChanged),
             this, &MainWindow::onSettingChanged);
 
     // 连接串口信号
@@ -172,7 +182,7 @@ void MainWindow::onConnectClicked() {
     if (!serialPort) return;
     
     QString portName = ui->portComboBox->currentText();
-    int baudRate = ui->baudRateSpinBox->value();
+    int baudRate = ui->baudRateSpinBox->currentText().toInt();
     
     if (portName.isEmpty()) {
         QMessageBox::warning(this, "错误", "请选择一个串口");
@@ -272,8 +282,8 @@ void MainWindow::closeEvent(QCloseEvent *event) {
 void MainWindow::loadSettings() {
     QSettings settings("SCOM-X", "SCOM-X");
     
-    int baudRate = settings.value("baudRate", 115200).toInt();
-    ui->baudRateSpinBox->setValue(baudRate);
+    QString baudRate = settings.value("baudRate", "115200").toString();
+    ui->baudRateSpinBox->setCurrentText(baudRate);
     
     QString dataBits = settings.value("dataBits", "8").toString();
     ui->dataBitsComboBox->setCurrentText(dataBits);
@@ -305,7 +315,7 @@ void MainWindow::loadSettings() {
 
 void MainWindow::saveSettings() {
     QSettings settings("SCOM-X", "SCOM-X");
-    settings.setValue("baudRate", ui->baudRateSpinBox->value());
+    settings.setValue("baudRate", ui->baudRateSpinBox->currentText());
     settings.setValue("dataBits", ui->dataBitsComboBox->currentText());
     settings.setValue("parity", ui->parityComboBox->currentText());
     settings.setValue("stopBits", ui->stopBitsComboBox->currentText());
