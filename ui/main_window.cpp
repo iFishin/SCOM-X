@@ -29,45 +29,6 @@
 #include <QKeyEvent>
 #include <QTextCursor>
 
-// TerminalTextEdit 实现
-TerminalTextEdit::TerminalTextEdit(QWidget *parent)
-    : QPlainTextEdit(parent)
-{
-    setStyleSheet("QPlainTextEdit { font-family: 'Courier New', monospace; font-size: 10pt; }");
-}
-
-void TerminalTextEdit::keyPressEvent(QKeyEvent *event) {
-    // Ctrl+K: 清空所有内容
-    if (event->key() == Qt::Key_K && event->modifiers() & Qt::ControlModifier) {
-        clear();
-        event->accept();
-        return;
-    }
-    
-    // Return/Enter: 发送指令并保留在窗口中
-    if ((event->key() == Qt::Key_Return || event->key() == Qt::Key_Enter) 
-        && event->modifiers() & Qt::ControlModifier) {
-        QString lastLine = getLastLine();
-        if (!lastLine.trimmed().isEmpty()) {
-            emit commandEntered(lastLine.trimmed());
-            // 添加新行供下一条指令
-            QPlainTextEdit::keyPressEvent(event);
-        }
-        event->accept();
-        return;
-    }
-    
-    // 其他快捷键交给父类处理（包括 Ctrl+Z, Ctrl+Y 等）
-    QPlainTextEdit::keyPressEvent(event);
-}
-
-QString TerminalTextEdit::getLastLine() const {
-    QTextCursor cursor = textCursor();
-    cursor.movePosition(QTextCursor::EndOfBlock);
-    cursor.movePosition(QTextCursor::StartOfBlock, QTextCursor::KeepAnchor);
-    return cursor.selectedText();
-}
-
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent), ui(std::make_unique<Ui::MainWindow>()), serialPort(std::make_unique<SerialPort>())
 {
@@ -141,31 +102,14 @@ void MainWindow::setupDynamicUI()
     ui->sendArea->setCurrentIndex(-1); // 初始为空
     ui->sendArea->setMaximumHeight(30);
 
-    // 配置接收区：替换为自定义的 TerminalTextEdit
-    // 删除原有的 receiveArea，使用自定义的终端风格编辑器
-    delete ui->receiveArea;
-    auto *terminalEdit = new TerminalTextEdit(this);
-    terminalEdit->setObjectName("receiveArea");
-    ui->receiveArea = terminalEdit;
-    ui->receivedDataLayout->addWidget(terminalEdit);
+    // 配置接收区：只读日志区域
+    ui->receiveArea->setStyleSheet("QPlainTextEdit { font-family: 'Courier New', monospace; font-size: 10pt; }");
+    ui->receiveArea->setReadOnly(true);
     
-    // 连接终端编辑器的指令信号到发送槽
-    connect(terminalEdit, &TerminalTextEdit::commandEntered,
-            this, [this](const QString &command) {
-                // 直接通过串口发送输入的指令
-                if (serialPort && serialPort->isOpen()) {
-                    if (ui->hexModeCheckBox->isChecked()) {
-                        serialPort->write(command, SerialPort::DataFormat::HEX);
-                    } else {
-                        serialPort->write(command, SerialPort::DataFormat::ASCII);
-                    }
-                    bytesSent += command.length();
-                    statusBar()->showMessage(QString("发送: %1 字节").arg(bytesSent));
-                } else {
-                    QMessageBox::warning(this, "错误", "串口未连接");
-                }
-            });
-
+    // 配置终端输入框
+    ui->terminalInput->setStyleSheet("QLineEdit { font-family: 'Courier New', monospace; font-size: 10pt; }");
+    ui->terminalPrompt->setStyleSheet("QLabel { font-family: 'Courier New', monospace; font-size: 10pt; color: green; font-weight: bold; }");
+    
     // 配置快捷指令表
     ui->commandTableLayout->setSpacing(5);
     ui->commandTableLayout->setContentsMargins(5, 5, 5, 5);
@@ -194,6 +138,38 @@ void MainWindow::connectSignals()
             this, &MainWindow::onSettingChanged);
     connect(ui->baudRateSpinBox, QOverload<int>::of(&QComboBox::currentIndexChanged),
             this, &MainWindow::onSettingChanged);
+
+    // 连接终端输入框的 Return 键
+    connect(ui->terminalInput, &QLineEdit::returnPressed, this, [this]() {
+        QString command = ui->terminalInput->text().trimmed();
+        if (command.isEmpty()) {
+            return;
+        }
+        
+        // 显示输入命令到日志区域
+        ui->receiveArea->insertPlainText("> " + command + "\n");
+        
+        // 滚动到底部
+        QTextCursor cursor = ui->receiveArea->textCursor();
+        cursor.movePosition(QTextCursor::End);
+        ui->receiveArea->setTextCursor(cursor);
+        
+        // 发送到串口
+        if (serialPort && serialPort->isOpen()) {
+            if (ui->hexModeCheckBox->isChecked()) {
+                serialPort->write(command, SerialPort::DataFormat::HEX);
+            } else {
+                serialPort->write(command, SerialPort::DataFormat::ASCII);
+            }
+            bytesSent += command.length();
+            statusBar()->showMessage(QString("发送: %1 字节").arg(bytesSent));
+        } else {
+            ui->receiveArea->insertPlainText("[错误] 串口未连接\n");
+        }
+        
+        // 清空输入框，焦点保留在输入框
+        ui->terminalInput->clear();
+    });
 
     // 连接串口信号
     if (serialPort)
