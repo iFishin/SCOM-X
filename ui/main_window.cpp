@@ -16,7 +16,7 @@
 #include <QPushButton>
 #include <QComboBox>
 #include <QSpinBox>
-#include <QTextEdit>
+#include <QPlainTextEdit>
 #include <QLineEdit>
 #include <QCheckBox>
 #include <QDir>
@@ -26,11 +26,50 @@
 #include <QIntValidator>
 #include <QSpacerItem>
 #include <QDialog>
+#include <QKeyEvent>
+#include <QTextCursor>
+
+// TerminalTextEdit 实现
+TerminalTextEdit::TerminalTextEdit(QWidget *parent)
+    : QPlainTextEdit(parent)
+{
+    setStyleSheet("QPlainTextEdit { font-family: 'Courier New', monospace; font-size: 10pt; }");
+}
+
+void TerminalTextEdit::keyPressEvent(QKeyEvent *event) {
+    // Ctrl+K: 清空所有内容
+    if (event->key() == Qt::Key_K && event->modifiers() & Qt::ControlModifier) {
+        clear();
+        event->accept();
+        return;
+    }
+    
+    // Return/Enter: 发送指令并保留在窗口中
+    if ((event->key() == Qt::Key_Return || event->key() == Qt::Key_Enter) 
+        && event->modifiers() & Qt::ControlModifier) {
+        QString lastLine = getLastLine();
+        if (!lastLine.trimmed().isEmpty()) {
+            emit commandEntered(lastLine.trimmed());
+            // 添加新行供下一条指令
+            QPlainTextEdit::keyPressEvent(event);
+        }
+        event->accept();
+        return;
+    }
+    
+    // 其他快捷键交给父类处理（包括 Ctrl+Z, Ctrl+Y 等）
+    QPlainTextEdit::keyPressEvent(event);
+}
+
+QString TerminalTextEdit::getLastLine() const {
+    QTextCursor cursor = textCursor();
+    cursor.movePosition(QTextCursor::EndOfBlock);
+    cursor.movePosition(QTextCursor::StartOfBlock, QTextCursor::KeepAnchor);
+    return cursor.selectedText();
+}
 
 MainWindow::MainWindow(QWidget *parent)
-    : QMainWindow(parent)
-    , ui(std::make_unique<Ui::MainWindow>())
-    , serialPort(std::make_unique<SerialPort>())
+    : QMainWindow(parent), ui(std::make_unique<Ui::MainWindow>()), serialPort(std::make_unique<SerialPort>())
 {
     // 从 .ui 文件生成的 UI 代码（由 Qt 自动生成）
     ui->setupUi(this);
@@ -50,10 +89,10 @@ MainWindow::MainWindow(QWidget *parent)
     // 初始化状态栏
     QLabel *bytesReceivedLabel = new QLabel("接收: 0 字节", this);
     QLabel *bytesSentLabel = new QLabel("发送: 0 字节", this);
-    
+
     statusBar()->addPermanentWidget(bytesReceivedLabel);
     statusBar()->addPermanentWidget(bytesSentLabel);
-    
+
     // 保存指针供后续使用（作为成员变量或直接使用）
     bytesReceived = 0;
     bytesSent = 0;
@@ -61,35 +100,33 @@ MainWindow::MainWindow(QWidget *parent)
 
 MainWindow::~MainWindow() = default;
 
-void MainWindow::setupDynamicUI() {
+void MainWindow::setupDynamicUI()
+{
     // 配置端口下拉框
     ui->portComboBox->setMinimumWidth(100);
-    
+
     // 配置波特率（QComboBox with editable mode）
     QStringList commonBaudRates = {
-        "9600",
-        "19200",
-        "38400",
-        "57600",
-        "115200",
-        "230400",
-        "460800",
-        "921600"
-    };
+        "50", "75", "110", "134", "150", "200", "300", "600", "1200", "1800",
+        "2400", "4800", "7200", "9600", "14400", "19200", "28800", "38400",
+        "57600", "76800", "115200", "128000", "153600", "230400", "256000",
+        "460800", "500000", "576000", "921600", "1000000", "1152000", "1500000",
+        "2000000", "2500000", "3000000", "3500000", "4000000", "4500000",
+        "5000000", "5500000", "6000000", "6500000", "7000000", "7500000", "8000000"};
     ui->baudRateSpinBox->addItems(commonBaudRates);
-    ui->baudRateSpinBox->setCurrentText("115200");  // 设置默认值
+    ui->baudRateSpinBox->setCurrentText("115200"); // 设置默认值
     ui->baudRateSpinBox->setMaximumWidth(120);
-    
+
     // 配置数据位
     ui->dataBitsComboBox->addItems({"5", "6", "7", "8"});
     ui->dataBitsComboBox->setCurrentText("8");
-    
+
     // 配置校验位
     ui->parityComboBox->addItems({"None", "Odd", "Even"});
-    
+
     // 配置停止位
     ui->stopBitsComboBox->addItems({"1", "1.5", "2"});
-    
+
     // 配置发送区（QComboBox with editable mode）
     // 添加预设命令
     QStringList presetCommands = {
@@ -99,25 +136,46 @@ void MainWindow::setupDynamicUI() {
         "AT+CWJAP=",
         "AT+CWLIF",
         "AT+CIFSR",
-        "AT+CIPSTART="
-    };
+        "AT+CIPSTART="};
     ui->sendArea->addItems(presetCommands);
-    ui->sendArea->setCurrentIndex(-1);  // 初始为空
+    ui->sendArea->setCurrentIndex(-1); // 初始为空
     ui->sendArea->setMaximumHeight(30);
+
+    // 配置接收区：替换为自定义的 TerminalTextEdit
+    // 删除原有的 receiveArea，使用自定义的终端风格编辑器
+    delete ui->receiveArea;
+    auto *terminalEdit = new TerminalTextEdit(this);
+    terminalEdit->setObjectName("receiveArea");
+    ui->receiveArea = terminalEdit;
+    ui->receivedDataLayout->addWidget(terminalEdit);
     
-    // 配置接收区
-    ui->receiveArea->setReadOnly(true);
-    ui->receiveArea->setPlaceholderText("接收到的数据将显示在这里...");
-    
+    // 连接终端编辑器的指令信号到发送槽
+    connect(terminalEdit, &TerminalTextEdit::commandEntered,
+            this, [this](const QString &command) {
+                // 直接通过串口发送输入的指令
+                if (serialPort && serialPort->isOpen()) {
+                    if (ui->hexModeCheckBox->isChecked()) {
+                        serialPort->write(command, SerialPort::DataFormat::HEX);
+                    } else {
+                        serialPort->write(command, SerialPort::DataFormat::ASCII);
+                    }
+                    bytesSent += command.length();
+                    statusBar()->showMessage(QString("发送: %1 字节").arg(bytesSent));
+                } else {
+                    QMessageBox::warning(this, "错误", "串口未连接");
+                }
+            });
+
     // 配置快捷指令表
     ui->commandTableLayout->setSpacing(5);
     ui->commandTableLayout->setContentsMargins(5, 5, 5, 5);
-    
+
     // 建立快捷指令行（从行1开始，行0是表头）
     rebuildCommandTable(currentCommandRows);
 }
 
-void MainWindow::connectSignals() {
+void MainWindow::connectSignals()
+{
     // 连接按钮
     connect(ui->connectButton, &QPushButton::clicked, this, &MainWindow::onConnectClicked);
     connect(ui->disconnectButton, &QPushButton::clicked, this, &MainWindow::onDisconnectClicked);
@@ -125,51 +183,61 @@ void MainWindow::connectSignals() {
     connect(ui->clearReceiveButton, &QPushButton::clicked, this, &MainWindow::onClearReceiveArea);
     connect(ui->clearSendButton, &QPushButton::clicked, this, &MainWindow::onClearSendArea);
     connect(ui->refreshButton, &QPushButton::clicked, this, &MainWindow::onRefreshPorts);
-    
+
     // 连接菜单信号
     connect(ui->actionPreferences, &QAction::triggered, this, &MainWindow::onPreferencesClicked);
     connect(ui->actionExit, &QAction::triggered, this, &QApplication::quit);
     connect(ui->actionAbout, &QAction::triggered, this, &MainWindow::onAboutAction);
-    
+
     // 连接设置变化
-    connect(ui->portComboBox, QOverload<int>::of(&QComboBox::currentIndexChanged), 
+    connect(ui->portComboBox, QOverload<int>::of(&QComboBox::currentIndexChanged),
             this, &MainWindow::onSettingChanged);
     connect(ui->baudRateSpinBox, QOverload<int>::of(&QComboBox::currentIndexChanged),
             this, &MainWindow::onSettingChanged);
 
     // 连接串口信号
-    if (serialPort) {
-        connect(serialPort.get(), QOverload<const QString&, SerialPort::DataFormat>::of(&SerialPort::dataReceived),
-                this, [this](const QString &data, SerialPort::DataFormat format) {
-                    ui->receiveArea->append(data);
+    if (serialPort)
+    {
+        connect(serialPort.get(), QOverload<const QString &, SerialPort::DataFormat>::of(&SerialPort::dataReceived),
+                this, [this](const QString &data, SerialPort::DataFormat format)
+                {
+                    ui->receiveArea->insertPlainText(data + "\n");
+                    // 滚动到底部
+                    QTextCursor cursor = ui->receiveArea->textCursor();
+                    cursor.movePosition(QTextCursor::End);
+                    ui->receiveArea->setTextCursor(cursor);
+                    
                     bytesReceived += data.length();
                     // 更新状态栏
-                    statusBar()->showMessage(QString("接收: %1 字节").arg(bytesReceived));
-                });
-        
-        connect(serialPort.get(), QOverload<const QString&, SerialPort::DataFormat>::of(&SerialPort::dataSent),
-                this, [this](const QString &data, SerialPort::DataFormat format) {
+                    statusBar()->showMessage(QString("接收: %1 字节").arg(bytesReceived)); });
+
+        connect(serialPort.get(), QOverload<const QString &, SerialPort::DataFormat>::of(&SerialPort::dataSent),
+                this, [this](const QString &data, SerialPort::DataFormat format)
+                {
                     bytesSent += data.length();
                     // 更新状态栏
-                    statusBar()->showMessage(QString("发送: %1 字节").arg(bytesSent));
-                });
-        
+                    statusBar()->showMessage(QString("发送: %1 字节").arg(bytesSent)); });
+
         connect(serialPort.get(), &SerialPort::connectionStatusChanged,
                 this, &MainWindow::onConnectionStatusChanged);
-        
+
         connect(serialPort.get(), &SerialPort::errorOccurred,
                 this, &MainWindow::onSerialError);
     }
 }
 
-void MainWindow::applyStyles() {
+void MainWindow::applyStyles()
+{
     QFile styleFile(":/ui/style.qss");
-    if (styleFile.open(QFile::ReadOnly)) {
+    if (styleFile.open(QFile::ReadOnly))
+    {
         QString style = QLatin1String(styleFile.readAll());
         qApp->setStyleSheet(style);
         styleFile.close();
         qDebug() << "✓ 样式文件加载成功，文件大小:" << style.size() << "字符";
-    } else {
+    }
+    else
+    {
         qDebug() << "✗ 无法加载样式文件: :/ui/style.qss";
         qDebug() << "可用资源:";
         // 列出可用资源进行调试
@@ -178,81 +246,103 @@ void MainWindow::applyStyles() {
     }
 }
 
-void MainWindow::onConnectClicked() {
-    if (!serialPort) return;
-    
+void MainWindow::onConnectClicked()
+{
+    if (!serialPort)
+        return;
+
     QString portName = ui->portComboBox->currentText();
     int baudRate = ui->baudRateSpinBox->currentText().toInt();
-    
-    if (portName.isEmpty()) {
+
+    if (portName.isEmpty())
+    {
         QMessageBox::warning(this, "错误", "请选择一个串口");
         return;
     }
-    
-    if (serialPort->open(portName, baudRate)) {
+
+    if (serialPort->open(portName, baudRate))
+    {
         updateConnectionStatus(true);
-    } else {
+    }
+    else
+    {
         QMessageBox::critical(this, "错误", "无法打开串口: " + portName);
     }
 }
 
-void MainWindow::onDisconnectClicked() {
-    if (serialPort && serialPort->isOpen()) {
+void MainWindow::onDisconnectClicked()
+{
+    if (serialPort && serialPort->isOpen())
+    {
         serialPort->close();
         updateConnectionStatus(false);
     }
 }
 
-void MainWindow::onSendDataClicked() {
-    if (!serialPort || !serialPort->isOpen()) {
+void MainWindow::onSendDataClicked()
+{
+    if (!serialPort || !serialPort->isOpen())
+    {
         QMessageBox::warning(this, "错误", "串口未连接");
         return;
     }
-    
+
     QString data = ui->sendArea->currentText();
-    if (data.isEmpty()) {
+    if (data.isEmpty())
+    {
         QMessageBox::warning(this, "错误", "请输入要发送的数据");
         return;
     }
-    
-    if (ui->hexModeCheckBox->isChecked()) {
+
+    if (ui->hexModeCheckBox->isChecked())
+    {
         serialPort->write(data, SerialPort::DataFormat::HEX);
-    } else {
+    }
+    else
+    {
         serialPort->write(data, SerialPort::DataFormat::ASCII);
     }
 }
 
-void MainWindow::onClearReceiveArea() {
+void MainWindow::onClearReceiveArea()
+{
     ui->receiveArea->clear();
     bytesReceived = 0;
     statusBar()->showMessage("接收: 0 字节");
 }
 
-void MainWindow::onClearSendArea() {
-    ui->sendArea->setCurrentIndex(-1);  // 清空编辑框内容，但保留历史
+void MainWindow::onClearSendArea()
+{
+    ui->sendArea->setCurrentIndex(-1); // 清空编辑框内容，但保留历史
 }
 
-void MainWindow::onRefreshPorts() {
+void MainWindow::onRefreshPorts()
+{
     ui->portComboBox->clear();
     QStringList ports = SerialPort::scanAvailablePorts();
     ui->portComboBox->addItems(ports);
 }
 
-void MainWindow::onConnectionStatusChanged(bool connected) {
+void MainWindow::onConnectionStatusChanged(bool connected)
+{
     updateConnectionStatus(connected);
 }
 
-void MainWindow::onSerialError(const QString &errorMsg) {
+void MainWindow::onSerialError(const QString &errorMsg)
+{
     QMessageBox::critical(this, "串口错误", errorMsg);
 }
 
-void MainWindow::onSettingChanged() {
+void MainWindow::onSettingChanged()
+{
     // 设置变化时的处理逻辑
     saveSettings();
 }
 
-void MainWindow::updateConnectionStatus(bool connected) {
-    if (connected) {
+void MainWindow::updateConnectionStatus(bool connected)
+{
+    if (connected)
+    {
         ui->statusLabel->setText("已连接");
         ui->statusLabel->setStyleSheet("color: #00a86b; font-weight: bold;");
         ui->connectButton->setEnabled(false);
@@ -260,7 +350,9 @@ void MainWindow::updateConnectionStatus(bool connected) {
         ui->sendButton->setEnabled(true);
         ui->portComboBox->setEnabled(false);
         ui->baudRateSpinBox->setEnabled(false);
-    } else {
+    }
+    else
+    {
         ui->statusLabel->setText("已断开连接");
         ui->statusLabel->setStyleSheet("color: #6c757d; font-weight: bold;");
         ui->connectButton->setEnabled(true);
@@ -271,38 +363,45 @@ void MainWindow::updateConnectionStatus(bool connected) {
     }
 }
 
-void MainWindow::closeEvent(QCloseEvent *event) {
+void MainWindow::closeEvent(QCloseEvent *event)
+{
     saveSettings();
-    if (serialPort && serialPort->isOpen()) {
+    if (serialPort && serialPort->isOpen())
+    {
         serialPort->close();
     }
     QMainWindow::closeEvent(event);
 }
 
-void MainWindow::loadSettings() {
+void MainWindow::loadSettings()
+{
     QSettings settings("SCOM-X", "SCOM-X");
-    
+
     QString baudRate = settings.value("baudRate", "115200").toString();
     ui->baudRateSpinBox->setCurrentText(baudRate);
-    
+
     QString dataBits = settings.value("dataBits", "8").toString();
     ui->dataBitsComboBox->setCurrentText(dataBits);
-    
+
     QString parity = settings.value("parity", "None").toString();
     ui->parityComboBox->setCurrentText(parity);
-    
+
     QString stopBits = settings.value("stopBits", "1").toString();
     ui->stopBitsComboBox->setCurrentText(stopBits);
-    
+
     // 加载快捷指令行数设置
     currentCommandRows = settings.value("commandRows", 10).toInt();
-    if (currentCommandRows < 1) currentCommandRows = 1;
-    if (currentCommandRows > maxCommandRows) currentCommandRows = maxCommandRows;
+    if (currentCommandRows < 1)
+        currentCommandRows = 1;
+    if (currentCommandRows > maxCommandRows)
+        currentCommandRows = maxCommandRows;
 
     // 加载快捷指令数据
-    for (int i = 0; i < (int)commandInputs.size(); ++i) {
+    for (int i = 0; i < (int)commandInputs.size(); ++i)
+    {
         QString data = settings.value(QString("command_%1_data").arg(i), "").toString();
-        if (!data.isEmpty()) {
+        if (!data.isEmpty())
+        {
             commandInputs[i]->setText(data);
             commandHexCheckboxes[i]->setChecked(settings.value(QString("command_%1_hex").arg(i), false).toBool());
             commandEndCheckboxes[i]->setChecked(settings.value(QString("command_%1_end").arg(i), true).toBool());
@@ -313,73 +412,85 @@ void MainWindow::loadSettings() {
     onRefreshPorts();
 }
 
-void MainWindow::saveSettings() {
+void MainWindow::saveSettings()
+{
     QSettings settings("SCOM-X", "SCOM-X");
     settings.setValue("baudRate", ui->baudRateSpinBox->currentText());
     settings.setValue("dataBits", ui->dataBitsComboBox->currentText());
     settings.setValue("parity", ui->parityComboBox->currentText());
     settings.setValue("stopBits", ui->stopBitsComboBox->currentText());
-    
+
     // 保存快捷指令行数
     settings.setValue("commandRows", currentCommandRows);
-    
+
     // 保存快捷指令
-    for (int i = 0; i < (int)commandInputs.size(); ++i) {
+    for (int i = 0; i < (int)commandInputs.size(); ++i)
+    {
         settings.setValue(QString("command_%1_data").arg(i), commandInputs[i]->text());
         settings.setValue(QString("command_%1_hex").arg(i), commandHexCheckboxes[i]->isChecked());
         settings.setValue(QString("command_%1_end").arg(i), commandEndCheckboxes[i]->isChecked());
         settings.setValue(QString("command_%1_interval").arg(i), commandIntervals[i]->text());
     }
-    
+
     settings.sync();
 }
 
-void MainWindow::onQuickCommandButtonClicked(int index) {
-    if (index < (int)commandInputs.size()) {
+void MainWindow::onQuickCommandButtonClicked(int index)
+{
+    if (index < (int)commandInputs.size())
+    {
         QString data = commandInputs[index]->text();
-        if (!data.isEmpty()) {
-            if (serialPort && serialPort->isOpen()) {
-                serialPort->write(data, commandHexCheckboxes[index]->isChecked() ?
-                                 SerialPort::DataFormat::HEX :
-                                 SerialPort::DataFormat::ASCII);
+        if (!data.isEmpty())
+        {
+            if (serialPort && serialPort->isOpen())
+            {
+                serialPort->write(data, commandHexCheckboxes[index]->isChecked() ? SerialPort::DataFormat::HEX : SerialPort::DataFormat::ASCII);
                 bytesSent += data.length();
                 statusBar()->showMessage(QString("发送: %1 字节").arg(bytesSent));
-            } else {
+            }
+            else
+            {
                 QMessageBox::warning(this, "错误", "串口未连接");
             }
         }
     }
 }
 
-void MainWindow::onQuickCommandReturnPressed(int index) {
+void MainWindow::onQuickCommandReturnPressed(int index)
+{
     onQuickCommandButtonClicked(index);
 }
 
-void MainWindow::onHotkeyClicked(int index) {
-    if (index >= 0 && index < (int)commandInputs.size()) {
+void MainWindow::onHotkeyClicked(int index)
+{
+    if (index >= 0 && index < (int)commandInputs.size())
+    {
         onQuickCommandButtonClicked(index);
     }
 }
 
-void MainWindow::onSettingsAction() {
+void MainWindow::onSettingsAction()
+{
     QMessageBox::information(this, "设置", "设置功能开发中...");
 }
 
-void MainWindow::onAboutAction() {
+void MainWindow::onAboutAction()
+{
     QMessageBox::about(this, "关于 SCOM-X",
-        "SCOM-X - 串口通信工具\n"
-        "版本: 1.0.0\n\n"
-        "一个功能强大的串口通信工具，支持多种数据格式和快捷指令。");
+                       "SCOM-X - 串口通信工具\n"
+                       "版本: 1.0.0\n\n"
+                       "一个功能强大的串口通信工具，支持多种数据格式和快捷指令。");
 }
 
-void MainWindow::onPreferencesClicked() {
+void MainWindow::onPreferencesClicked()
+{
     // 创建偏好设置对话框
     QDialog prefsDialog(this);
     prefsDialog.setWindowTitle("偏好设置");
     prefsDialog.setFixedSize(400, 200);
-    
+
     QVBoxLayout *layout = new QVBoxLayout(&prefsDialog);
-    
+
     // 快捷指令行数设置
     QHBoxLayout *rowsLayout = new QHBoxLayout();
     rowsLayout->addWidget(new QLabel("快捷指令行数:"));
@@ -390,13 +501,13 @@ void MainWindow::onPreferencesClicked() {
     rowsLayout->addWidget(rowsSpinBox);
     rowsLayout->addStretch();
     layout->addLayout(rowsLayout);
-    
+
     QLabel *tipsLabel = new QLabel("(1-30 行，修改后立即生效)");
     tipsLabel->setStyleSheet("color: gray; font-size: 11px;");
     layout->addWidget(tipsLabel);
-    
+
     layout->addStretch();
-    
+
     // 按钮
     QHBoxLayout *buttonLayout = new QHBoxLayout();
     QPushButton *okButton = new QPushButton("确定");
@@ -405,13 +516,15 @@ void MainWindow::onPreferencesClicked() {
     buttonLayout->addWidget(okButton);
     buttonLayout->addWidget(cancelButton);
     layout->addLayout(buttonLayout);
-    
+
     connect(okButton, &QPushButton::clicked, &prefsDialog, &QDialog::accept);
     connect(cancelButton, &QPushButton::clicked, &prefsDialog, &QDialog::reject);
-    
-    if (prefsDialog.exec() == QDialog::Accepted) {
+
+    if (prefsDialog.exec() == QDialog::Accepted)
+    {
         int newRows = rowsSpinBox->value();
-        if (newRows != currentCommandRows) {
+        if (newRows != currentCommandRows)
+        {
             currentCommandRows = newRows;
             rebuildCommandTable(currentCommandRows);
             saveSettings();
@@ -419,67 +532,80 @@ void MainWindow::onPreferencesClicked() {
     }
 }
 
-void MainWindow::rebuildCommandTable(int rowCount) {
+void MainWindow::rebuildCommandTable(int rowCount)
+{
     // 清除现有的数据行（保留表头第0行）
-    while (ui->commandTableLayout->rowCount() > 1) {
-        for (int col = 0; col < 6; ++col) {
+    while (ui->commandTableLayout->rowCount() > 1)
+    {
+        for (int col = 0; col < 6; ++col)
+        {
             QLayoutItem *item = ui->commandTableLayout->itemAtPosition(ui->commandTableLayout->rowCount() - 1, col);
-            if (item) {
+            if (item)
+            {
                 delete item->widget();
                 ui->commandTableLayout->removeItem(item);
             }
         }
     }
-    
+
     // 清除向量中的指针
-    for (auto *checkbox : commandCheckboxes) delete checkbox;
-    for (auto *button : commandButtons) delete button;
-    for (auto *input : commandInputs) delete input;
-    for (auto *hexCheckbox : commandHexCheckboxes) delete hexCheckbox;
-    for (auto *endCheckbox : commandEndCheckboxes) delete endCheckbox;
-    for (auto *interval : commandIntervals) delete interval;
-    
+    for (auto *checkbox : commandCheckboxes)
+        delete checkbox;
+    for (auto *button : commandButtons)
+        delete button;
+    for (auto *input : commandInputs)
+        delete input;
+    for (auto *hexCheckbox : commandHexCheckboxes)
+        delete hexCheckbox;
+    for (auto *endCheckbox : commandEndCheckboxes)
+        delete endCheckbox;
+    for (auto *interval : commandIntervals)
+        delete interval;
+
     commandCheckboxes.clear();
     commandButtons.clear();
     commandInputs.clear();
     commandHexCheckboxes.clear();
     commandEndCheckboxes.clear();
     commandIntervals.clear();
-    
+
     // 创建新的快捷指令行
-    for (int i = 0; i < rowCount; ++i) {
+    for (int i = 0; i < rowCount; ++i)
+    {
         // 复选框
         QCheckBox *checkbox = new QCheckBox();
         commandCheckboxes.push_back(checkbox);
-        ui->commandTableLayout->addWidget(checkbox, i+1, 0, Qt::AlignCenter);
-        
+        ui->commandTableLayout->addWidget(checkbox, i + 1, 0, Qt::AlignCenter);
+
         // 发送按钮
-        QPushButton *button = new QPushButton(QString("Send %1").arg(i+1));
+        QPushButton *button = new QPushButton(QString("Send %1").arg(i + 1));
         button->setMaximumWidth(80);
         commandButtons.push_back(button);
-        ui->commandTableLayout->addWidget(button, i+1, 1);
-        connect(button, &QPushButton::clicked, this, [this, i]() { onQuickCommandButtonClicked(i); });
-        
+        ui->commandTableLayout->addWidget(button, i + 1, 1);
+        connect(button, &QPushButton::clicked, this, [this, i]()
+                { onQuickCommandButtonClicked(i); });
+
         // 数据输入框（占据尽可能多的空间）
         QLineEdit *inputField = new QLineEdit();
         inputField->setPlaceholderText("输入数据...");
         commandInputs.push_back(inputField);
-        ui->commandTableLayout->addWidget(inputField, i+1, 2);
-        connect(inputField, &QLineEdit::returnPressed, this, [this, i]() { onQuickCommandReturnPressed(i); });
-        
+        ui->commandTableLayout->addWidget(inputField, i + 1, 2);
+        connect(inputField, &QLineEdit::returnPressed, this, [this, i]()
+                { onQuickCommandReturnPressed(i); });
+
         // HEX 复选框
         QCheckBox *hexCheckbox = new QCheckBox();
         hexCheckbox->setToolTip("以十六进制发送");
         commandHexCheckboxes.push_back(hexCheckbox);
-        ui->commandTableLayout->addWidget(hexCheckbox, i+1, 3, Qt::AlignCenter);
-        
+        ui->commandTableLayout->addWidget(hexCheckbox, i + 1, 3, Qt::AlignCenter);
+
         // 加回车复选框
         QCheckBox *endCheckbox = new QCheckBox();
         endCheckbox->setChecked(true);
         endCheckbox->setToolTip("自动添加换行符");
         commandEndCheckboxes.push_back(endCheckbox);
-        ui->commandTableLayout->addWidget(endCheckbox, i+1, 4, Qt::AlignCenter);
-        
+        ui->commandTableLayout->addWidget(endCheckbox, i + 1, 4, Qt::AlignCenter);
+
         // 间隔输入框
         QLineEdit *intervalField = new QLineEdit();
         intervalField->setMaximumWidth(50);
@@ -489,10 +615,10 @@ void MainWindow::rebuildCommandTable(int rowCount) {
         QIntValidator *validator = new QIntValidator(0, 99999, this);
         intervalField->setValidator(validator);
         commandIntervals.push_back(intervalField);
-        ui->commandTableLayout->addWidget(intervalField, i+1, 5);
+        ui->commandTableLayout->addWidget(intervalField, i + 1, 5);
     }
-    
+
     // 添加伸缩项
-    ui->commandTableLayout->addItem(new QSpacerItem(20, 40, QSizePolicy::Minimum, QSizePolicy::Expanding), 
-                                    rowCount+1, 0, 1, 6);
+    ui->commandTableLayout->addItem(new QSpacerItem(20, 40, QSizePolicy::Minimum, QSizePolicy::Expanding),
+                                    rowCount + 1, 0, 1, 6);
 }

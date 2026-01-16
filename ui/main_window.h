@@ -5,10 +5,38 @@
 #include <QCheckBox>
 #include <QPushButton>
 #include <QComboBox>
+#include <QPlainTextEdit>
 #include <memory>
 #include <vector>
 
 class SerialPort;
+
+/**
+ * @class TerminalTextEdit
+ * @brief 支持终端风格快捷键的文本编辑器
+ * 
+ * 支持快捷键：
+ * - Ctrl+K: 清空所有内容
+ * - Ctrl+Z: 撤销
+ * - Ctrl+Y: 重做
+ * - Return/Enter: 发送指令信号
+ */
+class TerminalTextEdit : public QPlainTextEdit {
+    Q_OBJECT
+
+public:
+    explicit TerminalTextEdit(QWidget *parent = nullptr);
+
+signals:
+    void commandEntered(const QString &command);
+
+protected:
+    void keyPressEvent(QKeyEvent *event) override;
+
+private:
+    QString getLastLine() const;
+    void removeLastLine();
+};
 
 // 前向声明 UI 类（由 Qt 自动生成）
 namespace Ui {

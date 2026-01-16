@@ -275,13 +275,13 @@
       <item>
        <widget class="QGroupBox" name="receivedDataGroupBox">
         <property name="title">
-         <string>Received Data</string>
+         <string>Received Data (Ctrl+K to Clear)</string>
         </property>
         <layout class="QVBoxLayout" name="receivedDataLayout">
          <item>
-          <widget class="QTextEdit" name="receiveArea">
+          <widget class="QPlainTextEdit" name="receiveArea">
            <property name="readOnly">
-            <bool>true</bool>
+            <bool>false</bool>
            </property>
           </widget>
          </item>
