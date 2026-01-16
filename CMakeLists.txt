@@ -27,6 +27,7 @@ set(SOURCES
     src/serial_port.cpp
     src/config_manager.cpp
     src/preferences_dialog.cpp
+    src/splash_screen.cpp
 )
 
 # 头文件
@@ -35,6 +36,7 @@ set(HEADERS
     include/serial_port.h
     include/config_manager.h
     include/preferences_dialog.h
+    include/splash_screen.h
 )
 
 # 资源文件
