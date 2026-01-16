@@ -98,6 +98,10 @@ void MainWindow::setupDynamicUI()
     ui->terminalPrompt->setStyleSheet("QLabel { font-family: 'Courier New', monospace; font-size: 10pt; color: green; font-weight: bold; }");
     ui->terminalHexMode->setCheckState(Qt::Unchecked);
     
+    // 配置行尾符下拉框（默认选择 0D0A - CRLF）
+    ui->lineEndComboBox->setCurrentIndex(0);
+    ui->lineEndComboBox->setMaximumWidth(120);
+    
     // 配置快捷指令表
     ui->commandTableLayout->setSpacing(5);
     ui->commandTableLayout->setContentsMargins(5, 5, 5, 5);
@@ -133,6 +137,9 @@ void MainWindow::connectSignals()
             return;
         }
         
+        // 获取行尾符
+        QString lineEnd = getLineEndSuffix();
+        
         // 显示输入命令到日志区域
         ui->receiveArea->insertPlainText("> " + command + "\n");
         
@@ -143,12 +150,15 @@ void MainWindow::connectSignals()
         
         // 发送到串口
         if (serialPort && serialPort->isOpen()) {
+            // 拼接完整的发送数据（命令 + 行尾符）
+            QString fullCommand = command + lineEnd;
+            
             if (ui->terminalHexMode->isChecked()) {
-                serialPort->write(command, SerialPort::DataFormat::HEX);
+                serialPort->write(fullCommand, SerialPort::DataFormat::HEX);
             } else {
-                serialPort->write(command, SerialPort::DataFormat::ASCII);
+                serialPort->write(fullCommand, SerialPort::DataFormat::ASCII);
             }
-            bytesSent += command.length();
+            bytesSent += fullCommand.length();
             statusBar()->showMessage(QString("发送: %1 字节").arg(bytesSent));
         } else {
             ui->receiveArea->insertPlainText("[错误] 串口未连接\n");
@@ -318,6 +328,7 @@ void MainWindow::loadSettings()
     ui->portComboBox->setCurrentText(configManager->getSerialPort());
     ui->baudRateSpinBox->setCurrentText(QString::number(configManager->getBaudRate()));
     ui->terminalHexMode->setChecked(configManager->getHexMode());
+    ui->lineEndComboBox->setCurrentIndex(configManager->getLineEndIndex());
 
     // 加载快捷指令行数设置
     currentCommandRows = configManager->getCommandRows();
@@ -355,6 +366,7 @@ void MainWindow::saveSettings()
     configManager->setSerialPort(ui->portComboBox->currentText());
     configManager->setBaudRate(ui->baudRateSpinBox->currentText().toInt());
     configManager->setHexMode(ui->terminalHexMode->isChecked());
+    configManager->setLineEndIndex(ui->lineEndComboBox->currentIndex());
     configManager->setCommandRows(currentCommandRows);
 
     // 同时保存快捷指令到 QSettings（作为备用）
@@ -519,3 +531,20 @@ void MainWindow::rebuildCommandTable(int rowCount)
     ui->commandTableLayout->addItem(new QSpacerItem(20, 40, QSizePolicy::Minimum, QSizePolicy::Expanding),
                                     rowCount + 1, 0, 1, 6);
 }
+
+QString MainWindow::getLineEndSuffix() const
+{
+    int index = ui->lineEndComboBox->currentIndex();
+    switch (index) {
+        case 0:  // 0D0A (CRLF)
+            return "\r\n";
+        case 1:  // 0A (LF)
+            return "\n";
+        case 2:  // 0D (CR)
+            return "\r";
+        case 3:  // None
+        default:
+            return "";
+    }
+}
+

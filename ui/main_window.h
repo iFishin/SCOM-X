@@ -70,6 +70,7 @@ private:
     void loadSettings();
     void saveSettings();
     void updateConnectionStatus(bool connected);
+    QString getLineEndSuffix() const;  // 获取行尾符
 
     // UI 类指针（由 Qt 自动生成的 ui_main_window.h）
     std::unique_ptr<Ui::MainWindow> ui;

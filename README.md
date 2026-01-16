@@ -1,4 +1,4 @@
-# SCOM - Serial Communication Tool (C++/Qt 版本)
+# SCOM-X (C++/Qt 版本)
 
 <div align="center">
 

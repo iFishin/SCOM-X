@@ -224,11 +224,59 @@
           </layout>
          </item>
          <item>
-          <widget class="QCheckBox" name="terminalHexMode">
-           <property name="text">
-            <string>HEX</string>
-           </property>
-          </widget>
+          <layout class="QHBoxLayout" name="terminalControlLayout">
+           <item>
+            <widget class="QCheckBox" name="terminalHexMode">
+             <property name="text">
+              <string>HEX</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QLabel" name="lineEndLabel">
+             <property name="text">
+              <string>Line End:</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QComboBox" name="lineEndComboBox">
+             <item>
+              <property name="text">
+               <string>0D0A (CRLF)</string>
+              </property>
+             </item>
+             <item>
+              <property name="text">
+               <string>0A (LF)</string>
+              </property>
+             </item>
+             <item>
+              <property name="text">
+               <string>0D (CR)</string>
+              </property>
+             </item>
+             <item>
+              <property name="text">
+               <string>None</string>
+              </property>
+             </item>
+            </widget>
+           </item>
+           <item>
+            <spacer name="terminalControlSpacer">
+             <property name="orientation">
+              <enum>Qt::Orientation::Horizontal</enum>
+             </property>
+             <property name="sizeHint" stdset="0">
+              <size>
+               <width>40</width>
+               <height>20</height>
+              </size>
+             </property>
+            </spacer>
+           </item>
+          </layout>
          </item>
         </layout>
        </widget>

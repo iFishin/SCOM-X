@@ -11,9 +11,9 @@ int main(int argc, char *argv[])
     QApplication app(argc, argv);
 
     // 设置应用信息
-    app.setApplicationName("SCOM");
+    app.setApplicationName("SCOM-X");
     app.setApplicationVersion("1.0.0");
-    app.setApplicationDisplayName("Serial Communication Tool");
+    app.setApplicationDisplayName("SCOM-X");
 
     // 创建并显示主窗口
     MainWindow window;

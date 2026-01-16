@@ -35,6 +35,7 @@ public:
     bool getHexMode() const;
     int getWindowWidth() const;
     int getWindowHeight() const;
+    int getLineEndIndex() const;
 
     // 设置配置值
     void setSerialPort(const QString &port);
@@ -50,6 +51,7 @@ public:
     // 设置 UI 状态
     void setHexMode(bool enabled);
     void setWindowSize(int width, int height);
+    void setLineEndIndex(int index);
 
     // 保存配置到文件
     bool saveConfig();

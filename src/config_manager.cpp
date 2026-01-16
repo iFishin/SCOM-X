@@ -109,6 +109,7 @@ void ConfigManager::initializeDefaults() {
     uiConfig["hexMode"] = false;
     uiConfig["windowWidth"] = 1200;
     uiConfig["windowHeight"] = 800;
+    uiConfig["lineEndIndex"] = 0;  // 默认 0D0A (CRLF)
 
     configData["ui"] = uiConfig;
 }
@@ -161,6 +162,10 @@ int ConfigManager::getWindowWidth() const {
 
 int ConfigManager::getWindowHeight() const {
     return configData["ui"].toObject()["windowHeight"].toInt(800);
+}
+
+int ConfigManager::getLineEndIndex() const {
+    return configData["ui"].toObject()["lineEndIndex"].toInt(0);  // 默认 0 (0D0A)
 }
 
 // Setters - 串口配置
@@ -229,6 +234,12 @@ void ConfigManager::setWindowSize(int width, int height) {
     QJsonObject ui = configData["ui"].toObject();
     ui["windowWidth"] = width;
     ui["windowHeight"] = height;
+    configData["ui"] = ui;
+}
+
+void ConfigManager::setLineEndIndex(int index) {
+    QJsonObject ui = configData["ui"].toObject();
+    ui["lineEndIndex"] = index;
     configData["ui"] = ui;
 }
 
