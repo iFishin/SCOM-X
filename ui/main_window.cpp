@@ -89,16 +89,6 @@ void MainWindow::setupDynamicUI()
     ui->baudRateSpinBox->setCurrentText("115200"); // 设置默认值
     ui->baudRateSpinBox->setMaximumWidth(120);
 
-    // 配置数据位
-    ui->dataBitsComboBox->addItems({"5", "6", "7", "8"});
-    ui->dataBitsComboBox->setCurrentText("8");
-
-    // 配置校验位
-    ui->parityComboBox->addItems({"None", "Odd", "Even"});
-
-    // 配置停止位
-    ui->stopBitsComboBox->addItems({"1", "1.5", "2"});
-
     // 配置接收区：只读日志区域
     ui->receiveArea->setStyleSheet("QPlainTextEdit { font-family: 'Courier New', monospace; font-size: 10pt; }");
     ui->receiveArea->setReadOnly(true);
@@ -324,12 +314,9 @@ void MainWindow::loadSettings()
         return;
     }
 
-    // 加载串口设置
+    // 加载串口设置（主界面显示）
     ui->portComboBox->setCurrentText(configManager->getSerialPort());
     ui->baudRateSpinBox->setCurrentText(QString::number(configManager->getBaudRate()));
-    ui->dataBitsComboBox->setCurrentText(QString::number(configManager->getDataBits()));
-    ui->parityComboBox->setCurrentText(configManager->getParity());
-    ui->stopBitsComboBox->setCurrentText(configManager->getStopBits());
     ui->terminalHexMode->setChecked(configManager->getHexMode());
 
     // 加载快捷指令行数设置
@@ -367,9 +354,6 @@ void MainWindow::saveSettings()
 
     configManager->setSerialPort(ui->portComboBox->currentText());
     configManager->setBaudRate(ui->baudRateSpinBox->currentText().toInt());
-    configManager->setDataBits(ui->dataBitsComboBox->currentText().toInt());
-    configManager->setParity(ui->parityComboBox->currentText());
-    configManager->setStopBits(ui->stopBitsComboBox->currentText());
     configManager->setHexMode(ui->terminalHexMode->isChecked());
     configManager->setCommandRows(currentCommandRows);
 
