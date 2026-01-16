@@ -1,506 +1,492 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>MainWindow</class>
- <widget class="QMainWindow" name="MainWindow">
-  <property name="geometry">
-   <rect>
-    <x>0</x>
-    <y>0</y>
-    <width>1200</width>
-    <height>800</height>
-   </rect>
-  </property>
-  <property name="windowTitle">
-   <string>SCOM-X - Serial Communication Tool</string>
-  </property>
-  <property name="windowIcon">
-   <iconset resource="../resources/resources.qrc">
-    <normaloff>:/icons/app.png</normaloff>:/icons/app.png</iconset>
-  </property>
-  <widget class="QWidget" name="centralwidget">
-   <layout class="QHBoxLayout" name="horizontalLayout">
-    <property name="spacing">
-     <number>0</number>
+  <class>MainWindow</class>
+  <widget class="QMainWindow" name="MainWindow">
+    <property name="geometry">
+      <rect>
+        <x>0</x>
+        <y>0</y>
+        <width>1200</width>
+        <height>800</height>
+      </rect>
     </property>
-    <property name="leftMargin">
-     <number>0</number>
+    <property name="windowTitle">
+      <string>SCOM-X - Serial Communication Tool</string>
     </property>
-    <property name="topMargin">
-     <number>0</number>
+    <property name="windowIcon">
+      <iconset resource="../resources/resources.qrc">
+        <normaloff>:/icons/app.png</normaloff>:/icons/app.png</iconset>
     </property>
-    <property name="rightMargin">
-     <number>0</number>
-    </property>
-    <property name="bottomMargin">
-     <number>0</number>
-    </property>
-    <item>
-     <layout class="QVBoxLayout" name="leftLayout">
-      <property name="spacing">
-       <number>8</number>
-      </property>
-      <property name="leftMargin">
-       <number>10</number>
-      </property>
-      <property name="topMargin">
-       <number>10</number>
-      </property>
-      <property name="rightMargin">
-       <number>5</number>
-      </property>
-      <property name="bottomMargin">
-       <number>10</number>
-      </property>
-      <item>
-       <widget class="QGroupBox" name="settingsGroupBox">
-        <property name="title">
-         <string>Settings</string>
+    <widget class="QWidget" name="centralwidget">
+      <layout class="QHBoxLayout" name="horizontalLayout">
+        <property name="spacing">
+          <number>0</number>
         </property>
-        <layout class="QGridLayout" name="settingsLayout">
-         <item row="2" column="0">
-          <widget class="QLabel" name="dataBitsLabel">
-           <property name="text">
-            <string>Data Bits:</string>
-           </property>
-          </widget>
-         </item>
-         <item row="1" column="0">
-          <widget class="QLabel" name="baudRateLabel">
-           <property name="text">
-            <string>Baud Rate:</string>
-           </property>
-          </widget>
-         </item>
-         <item row="0" column="0">
-          <widget class="QLabel" name="portLabel">
-           <property name="text">
-            <string>Port:</string>
-           </property>
-          </widget>
-         </item>
-         <item row="1" column="1">
-          <widget class="QComboBox" name="baudRateSpinBox">
-           <property name="editable">
-            <bool>true</bool>
-           </property>
-           <property name="insertPolicy">
-            <enum>QComboBox::InsertAtTop</enum>
-           </property>
-          </widget>
-         </item>
-         <item row="0" column="2">
-          <widget class="QPushButton" name="refreshButton">
-           <property name="text">
-            <string>Refresh</string>
-           </property>
-          </widget>
-         </item>
-         <item row="0" column="1">
-          <widget class="QComboBox" name="portComboBox"/>
-         </item>
-         <item row="2" column="1">
-          <widget class="QComboBox" name="dataBitsComboBox"/>
-         </item>
-         <item row="4" column="0">
-          <widget class="QLabel" name="stopBitsLabel">
-           <property name="text">
-            <string>Stop Bits:</string>
-           </property>
-          </widget>
-         </item>
-         <item row="3" column="1">
-          <widget class="QComboBox" name="parityComboBox"/>
-         </item>
-         <item row="3" column="0">
-          <widget class="QLabel" name="parityLabel">
-           <property name="text">
-            <string>Parity:</string>
-           </property>
-          </widget>
-         </item>
-         <item row="4" column="1">
-          <widget class="QComboBox" name="stopBitsComboBox"/>
-         </item>
-         <item row="5" column="0" colspan="3">
-          <layout class="QHBoxLayout" name="connectionLayout"/>
-         </item>
-         <item row="1" column="2">
-          <widget class="QPushButton" name="connectButton">
-           <property name="text">
-            <string>Connect</string>
-           </property>
-          </widget>
-         </item>
-         <item row="2" column="2">
-          <widget class="QPushButton" name="disconnectButton">
-           <property name="enabled">
-            <bool>false</bool>
-           </property>
-           <property name="text">
-            <string>Disconnect</string>
-           </property>
-          </widget>
-         </item>
-         <item row="3" column="2">
-          <widget class="QLabel" name="statusLabel">
-           <property name="text">
-            <string>Disconnected</string>
-           </property>
-           <property name="alignment">
-            <set>Qt::AlignmentFlag::AlignCenter</set>
-           </property>
-          </widget>
-         </item>
-        </layout>
-       </widget>
-      </item>
-      <item>
-       <widget class="QGroupBox" name="commandGroupBox">
-        <property name="title">
-         <string>Send Command</string>
+        <property name="leftMargin">
+          <number>0</number>
         </property>
-        <layout class="QVBoxLayout" name="commandLayout">
-         <item>
-          <widget class="QComboBox" name="sendArea">
-           <property name="editable">
-            <bool>true</bool>
-           </property>
-           <property name="insertPolicy">
-            <enum>QComboBox::InsertAtTop</enum>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <layout class="QHBoxLayout" name="sendControlLayout">
-           <item>
-            <widget class="QCheckBox" name="hexModeCheckBox">
-             <property name="text">
-              <string>HEX Mode</string>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <spacer name="horizontalSpacer1">
-             <property name="orientation">
-              <enum>Qt::Orientation::Horizontal</enum>
-             </property>
-             <property name="sizeHint" stdset="0">
-              <size>
-               <width>40</width>
-               <height>20</height>
-              </size>
-             </property>
-            </spacer>
-           </item>
-           <item>
-            <widget class="QPushButton" name="clearSendButton">
-             <property name="text">
-              <string>Clear</string>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <widget class="QPushButton" name="sendButton">
-             <property name="text">
-              <string>Send</string>
-             </property>
-            </widget>
-           </item>
-          </layout>
-         </item>
-        </layout>
-       </widget>
-      </item>
-      <item>
-       <widget class="QGroupBox" name="hotkeysGroupBox">
-        <property name="minimumSize">
-         <size>
-          <width>0</width>
-          <height>60</height>
-         </size>
+        <property name="topMargin">
+          <number>0</number>
         </property>
-        <property name="title">
-         <string>Hotkeys (F1-F4)</string>
+        <property name="rightMargin">
+          <number>0</number>
         </property>
-        <layout class="QGridLayout" name="hotkeysLayout">
-         <item row="0" column="3">
-          <widget class="QPushButton" name="hotkey3Button">
-           <property name="minimumSize">
-            <size>
-             <width>0</width>
-             <height>15</height>
-            </size>
-           </property>
-           <property name="text">
-            <string>F3</string>
-           </property>
-          </widget>
-         </item>
-         <item row="0" column="1">
-          <widget class="QPushButton" name="clearReceiveButton">
-           <property name="text">
-            <string>Clear Received Data</string>
-           </property>
-          </widget>
-         </item>
-         <item row="0" column="2">
-          <widget class="QPushButton" name="hotkey2Button">
-           <property name="minimumSize">
-            <size>
-             <width>0</width>
-             <height>15</height>
-            </size>
-           </property>
-           <property name="text">
-            <string>F2</string>
-           </property>
-          </widget>
-         </item>
-         <item row="0" column="4">
-          <widget class="QPushButton" name="hotkey4Button">
-           <property name="minimumSize">
-            <size>
-             <width>0</width>
-             <height>15</height>
-            </size>
-           </property>
-           <property name="text">
-            <string>F4</string>
-           </property>
-          </widget>
-         </item>
-        </layout>
-       </widget>
-      </item>
-      <item>
-       <widget class="QGroupBox" name="receivedDataGroupBox">
-        <property name="title">
-         <string>Received Data (Terminal Style)</string>
+        <property name="bottomMargin">
+          <number>0</number>
         </property>
-        <layout class="QVBoxLayout" name="receivedDataLayout">
-         <item>
-          <widget class="QPlainTextEdit" name="receiveArea">
-           <property name="readOnly">
-            <bool>true</bool>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <layout class="QHBoxLayout" name="terminalInputLayout">
-           <item>
-            <widget class="QLabel" name="terminalPrompt">
-             <property name="text">
-              <string>&gt;</string>
-             </property>
-             <property name="minimumWidth">
-              <number>20</number>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <widget class="QLineEdit" name="terminalInput">
-             <property name="placeholderText">
-              <string>Enter command...</string>
-             </property>
-             <property name="maximumHeight">
-              <number>30</number>
-             </property>
-            </widget>
-           </item>
-          </layout>
-         </item>
-        </layout>
-       </widget>
-      </item>
-     </layout>
-    </item>
-    <item>
-     <layout class="QVBoxLayout" name="rightLayout">
-      <property name="spacing">
-       <number>8</number>
-      </property>
-      <property name="leftMargin">
-       <number>5</number>
-      </property>
-      <property name="topMargin">
-       <number>0</number>
-      </property>
-      <property name="rightMargin">
-       <number>10</number>
-      </property>
-      <property name="bottomMargin">
-       <number>10</number>
-      </property>
-      <item>
-       <widget class="QScrollArea" name="commandScrollArea">
-        <property name="frameShape">
-         <enum>QFrame::Shape::NoFrame</enum>
-        </property>
-        <property name="widgetResizable">
-         <bool>true</bool>
-        </property>
-        <widget class="QWidget" name="scrollAreaWidgetContents">
-         <property name="geometry">
-          <rect>
-           <x>0</x>
-           <y>0</y>
-           <width>585</width>
-           <height>748</height>
-          </rect>
-         </property>
-         <layout class="QVBoxLayout" name="verticalLayout_2">
-          <item>
-           <widget class="QGroupBox" name="commandTableGroupBox">
-            <property name="title">
-             <string>Quick Commands</string>
+        <item>
+          <layout class="QVBoxLayout" name="leftLayout">
+            <property name="spacing">
+              <number>8</number>
             </property>
-            <layout class="QGridLayout" name="commandTableLayout">
-             <property name="leftMargin">
+            <property name="leftMargin">
+              <number>10</number>
+            </property>
+            <property name="topMargin">
+              <number>10</number>
+            </property>
+            <property name="rightMargin">
               <number>5</number>
-             </property>
-             <property name="topMargin">
+            </property>
+            <property name="bottomMargin">
+              <number>10</number>
+            </property>
+            <item>
+              <widget class="QGroupBox" name="settingsGroupBox">
+                <property name="title">
+                  <string>Settings</string>
+                </property>
+                <layout class="QGridLayout" name="settingsLayout">
+                  <item row="2" column="0">
+                    <widget class="QLabel" name="dataBitsLabel">
+                      <property name="text">
+                        <string>Data Bits:</string>
+                      </property>
+                    </widget>
+                  </item>
+                  <item row="1" column="0">
+                    <widget class="QLabel" name="baudRateLabel">
+                      <property name="text">
+                        <string>Baud Rate:</string>
+                      </property>
+                    </widget>
+                  </item>
+                  <item row="0" column="0">
+                    <widget class="QLabel" name="portLabel">
+                      <property name="text">
+                        <string>Port:</string>
+                      </property>
+                    </widget>
+                  </item>
+                  <item row="1" column="1">
+                    <widget class="QComboBox" name="baudRateSpinBox">
+                      <property name="editable">
+                        <bool>true</bool>
+                      </property>
+                      <property name="insertPolicy">
+                        <enum>QComboBox::InsertAtTop</enum>
+                      </property>
+                    </widget>
+                  </item>
+                  <item row="0" column="2">
+                    <widget class="QPushButton" name="refreshButton">
+                      <property name="text">
+                        <string>Refresh</string>
+                      </property>
+                    </widget>
+                  </item>
+                  <item row="0" column="1">
+                    <widget class="QComboBox" name="portComboBox" />
+                  </item>
+                  <item row="2" column="1">
+                    <widget class="QComboBox" name="dataBitsComboBox" />
+                  </item>
+                  <item row="4" column="0">
+                    <widget class="QLabel" name="stopBitsLabel">
+                      <property name="text">
+                        <string>Stop Bits:</string>
+                      </property>
+                    </widget>
+                  </item>
+                  <item row="3" column="1">
+                    <widget class="QComboBox" name="parityComboBox" />
+                  </item>
+                  <item row="3" column="0">
+                    <widget class="QLabel" name="parityLabel">
+                      <property name="text">
+                        <string>Parity:</string>
+                      </property>
+                    </widget>
+                  </item>
+                  <item row="4" column="1">
+                    <widget class="QComboBox" name="stopBitsComboBox" />
+                  </item>
+                  <item row="5" column="0" colspan="3">
+                    <layout class="QHBoxLayout" name="connectionLayout" />
+                  </item>
+                  <item row="1" column="2">
+                    <widget class="QPushButton" name="connectButton">
+                      <property name="text">
+                        <string>Connect</string>
+                      </property>
+                    </widget>
+                  </item>
+                  <item row="2" column="2">
+                    <widget class="QPushButton" name="disconnectButton">
+                      <property name="enabled">
+                        <bool>false</bool>
+                      </property>
+                      <property name="text">
+                        <string>Disconnect</string>
+                      </property>
+                    </widget>
+                  </item>
+                  <item row="3" column="2">
+                    <widget class="QLabel" name="statusLabel">
+                      <property name="text">
+                        <string>Disconnected</string>
+                      </property>
+                      <property name="alignment">
+                        <set>Qt::AlignmentFlag::AlignCenter</set>
+                      </property>
+                    </widget>
+                  </item>
+                </layout>
+              </widget>
+            </item>
+            <item>
+              <widget class="QGroupBox" name="commandGroupBox">
+                <property name="title">
+                  <string>Send Command</string>
+                </property>
+                <layout class="QVBoxLayout" name="commandLayout">
+                  <item>
+                    <layout class="QHBoxLayout" name="sendControlLayout">
+                      <item>
+                        <widget class="QCheckBox" name="hexModeCheckBox">
+                          <property name="text">
+                            <string>HEX Mode</string>
+                          </property>
+                        </widget>
+                      </item>
+                      <item>
+                        <spacer name="horizontalSpacer1">
+                          <property name="orientation">
+                            <enum>Qt::Orientation::Horizontal</enum>
+                          </property>
+                          <property name="sizeHint" stdset="0">
+                            <size>
+                              <width>40</width>
+                              <height>20</height>
+                            </size>
+                          </property>
+                        </spacer>
+                      </item>
+                    </layout>
+                  </item>
+                </layout>
+              </widget>
+            </item>
+            <item>
+              <widget class="QGroupBox" name="hotkeysGroupBox">
+                <property name="minimumSize">
+                  <size>
+                    <width>0</width>
+                    <height>60</height>
+                  </size>
+                </property>
+                <property name="title">
+                  <string>Hotkeys (F1-F4)</string>
+                </property>
+                <layout class="QGridLayout" name="hotkeysLayout">
+                  <item row="0" column="3">
+                    <widget class="QPushButton" name="hotkey3Button">
+                      <property name="minimumSize">
+                        <size>
+                          <width>0</width>
+                          <height>15</height>
+                        </size>
+                      </property>
+                      <property name="text">
+                        <string>F3</string>
+                      </property>
+                    </widget>
+                  </item>
+                  <item row="0" column="1">
+                    <widget class="QPushButton" name="clearReceiveButton">
+                      <property name="text">
+                        <string>Clear-Log</string>
+                      </property>
+                    </widget>
+                  </item>
+                  <item row="0" column="2">
+                    <widget class="QPushButton" name="hotkey2Button">
+                      <property name="minimumSize">
+                        <size>
+                          <width>0</width>
+                          <height>15</height>
+                        </size>
+                      </property>
+                      <property name="text">
+                        <string>F2</string>
+                      </property>
+                    </widget>
+                  </item>
+                  <item row="0" column="4">
+                    <widget class="QPushButton" name="hotkey4Button">
+                      <property name="minimumSize">
+                        <size>
+                          <width>0</width>
+                          <height>15</height>
+                        </size>
+                      </property>
+                      <property name="text">
+                        <string>F4</string>
+                      </property>
+                    </widget>
+                  </item>
+                </layout>
+              </widget>
+            </item>
+            <item>
+              <widget class="QGroupBox" name="receivedDataGroupBox">
+                <property name="title">
+                  <string>Received Data (Terminal Style)</string>
+                </property>
+                <layout class="QVBoxLayout" name="receivedDataLayout">
+                  <item>
+                    <widget class="QPlainTextEdit" name="receiveArea">
+                      <property name="readOnly">
+                        <bool>true</bool>
+                      </property>
+                    </widget>
+                  </item>
+                  <item>
+                    <layout class="QHBoxLayout" name="terminalInputLayout">
+                      <item>
+                        <widget class="QLabel" name="terminalPrompt">
+                          <property name="text">
+                            <string>&gt;</string>
+                          </property>
+                          <property name="minimumWidth">
+                            <number>20</number>
+                          </property>
+                        </widget>
+                      </item>
+                      <item>
+                        <widget class="QLineEdit" name="terminalInput">
+                          <property name="placeholderText">
+                            <string>Enter command... (Press Enter to send)</string>
+                          </property>
+                          <property name="maximumHeight">
+                            <number>30</number>
+                          </property>
+                        </widget>
+                      </item>
+                      <item>
+                        <widget class="QCheckBox" name="terminalHexMode">
+                          <property name="text">
+                            <string>HEX</string>
+                          </property>
+                          <property name="maximumWidth">
+                            <number>50</number>
+                          </property>
+                        </widget>
+                      </item>
+                    </layout>
+                  </item>
+                </layout>
+              </widget>
+            </item>
+          </layout>
+        </item>
+        <item>
+          <layout class="QVBoxLayout" name="rightLayout">
+            <property name="spacing">
+              <number>8</number>
+            </property>
+            <property name="leftMargin">
+              <number>5</number>
+            </property>
+            <property name="topMargin">
               <number>0</number>
-             </property>
-             <property name="rightMargin">
-              <number>5</number>
-             </property>
-             <property name="bottomMargin">
-              <number>5</number>
-             </property>
-             <item row="0" column="0">
-              <widget class="QLabel" name="headerCheck">
-               <property name="text">
-                <string>✓</string>
-               </property>
-               <property name="alignment">
-                <set>Qt::AlignmentFlag::AlignCenter</set>
-               </property>
+            </property>
+            <property name="rightMargin">
+              <number>10</number>
+            </property>
+            <property name="bottomMargin">
+              <number>10</number>
+            </property>
+            <item>
+              <widget class="QScrollArea" name="commandScrollArea">
+                <property name="frameShape">
+                  <enum>QFrame::Shape::NoFrame</enum>
+                </property>
+                <property name="widgetResizable">
+                  <bool>true</bool>
+                </property>
+                <widget class="QWidget" name="scrollAreaWidgetContents">
+                  <property name="geometry">
+                    <rect>
+                      <x>0</x>
+                      <y>0</y>
+                      <width>585</width>
+                      <height>748</height>
+                    </rect>
+                  </property>
+                  <layout class="QVBoxLayout" name="verticalLayout_2">
+                    <item>
+                      <widget class="QGroupBox" name="commandTableGroupBox">
+                        <property name="title">
+                          <string>Quick Commands</string>
+                        </property>
+                        <layout class="QGridLayout" name="commandTableLayout">
+                          <property name="leftMargin">
+                            <number>5</number>
+                          </property>
+                          <property name="topMargin">
+                            <number>0</number>
+                          </property>
+                          <property name="rightMargin">
+                            <number>5</number>
+                          </property>
+                          <property name="bottomMargin">
+                            <number>5</number>
+                          </property>
+                          <item row="0" column="0">
+                            <widget class="QLabel" name="headerCheck">
+                              <property name="text">
+                                <string>✓</string>
+                              </property>
+                              <property name="alignment">
+                                <set>Qt::AlignmentFlag::AlignCenter</set>
+                              </property>
+                            </widget>
+                          </item>
+                          <item row="0" column="1">
+                            <widget class="QLabel" name="headerButton">
+                              <property name="text">
+                                <string>Button</string>
+                              </property>
+                              <property name="alignment">
+                                <set>Qt::AlignmentFlag::AlignCenter</set>
+                              </property>
+                            </widget>
+                          </item>
+                          <item row="0" column="2">
+                            <widget class="QLabel" name="headerData">
+                              <property name="text">
+                                <string>Data</string>
+                              </property>
+                              <property name="alignment">
+                                <set>Qt::AlignmentFlag::AlignCenter</set>
+                              </property>
+                            </widget>
+                          </item>
+                          <item row="0" column="3">
+                            <widget class="QLabel" name="headerHex">
+                              <property name="text">
+                                <string>HEX</string>
+                              </property>
+                              <property name="alignment">
+                                <set>Qt::AlignmentFlag::AlignCenter</set>
+                              </property>
+                            </widget>
+                          </item>
+                          <item row="0" column="4">
+                            <widget class="QLabel" name="headerEnd">
+                              <property name="text">
+                                <string>End</string>
+                              </property>
+                              <property name="alignment">
+                                <set>Qt::AlignmentFlag::AlignCenter</set>
+                              </property>
+                            </widget>
+                          </item>
+                          <item row="0" column="5">
+                            <widget class="QLabel" name="headerInterval">
+                              <property name="text">
+                                <string>Interval(ms)</string>
+                              </property>
+                              <property name="alignment">
+                                <set>Qt::AlignmentFlag::AlignCenter</set>
+                              </property>
+                            </widget>
+                          </item>
+                        </layout>
+                      </widget>
+                    </item>
+                  </layout>
+                </widget>
               </widget>
-             </item>
-             <item row="0" column="1">
-              <widget class="QLabel" name="headerButton">
-               <property name="text">
-                <string>Button</string>
-               </property>
-               <property name="alignment">
-                <set>Qt::AlignmentFlag::AlignCenter</set>
-               </property>
-              </widget>
-             </item>
-             <item row="0" column="2">
-              <widget class="QLabel" name="headerData">
-               <property name="text">
-                <string>Data</string>
-               </property>
-               <property name="alignment">
-                <set>Qt::AlignmentFlag::AlignCenter</set>
-               </property>
-              </widget>
-             </item>
-             <item row="0" column="3">
-              <widget class="QLabel" name="headerHex">
-               <property name="text">
-                <string>HEX</string>
-               </property>
-               <property name="alignment">
-                <set>Qt::AlignmentFlag::AlignCenter</set>
-               </property>
-              </widget>
-             </item>
-             <item row="0" column="4">
-              <widget class="QLabel" name="headerEnd">
-               <property name="text">
-                <string>End</string>
-               </property>
-               <property name="alignment">
-                <set>Qt::AlignmentFlag::AlignCenter</set>
-               </property>
-              </widget>
-             </item>
-             <item row="0" column="5">
-              <widget class="QLabel" name="headerInterval">
-               <property name="text">
-                <string>Interval(ms)</string>
-               </property>
-               <property name="alignment">
-                <set>Qt::AlignmentFlag::AlignCenter</set>
-               </property>
-              </widget>
-             </item>
-            </layout>
-           </widget>
-          </item>
-         </layout>
-        </widget>
-       </widget>
-      </item>
-     </layout>
-    </item>
-   </layout>
+            </item>
+          </layout>
+        </item>
+      </layout>
+    </widget>
+    <widget class="QMenuBar" name="menubar">
+      <property name="geometry">
+        <rect>
+          <x>0</x>
+          <y>0</y>
+          <width>1200</width>
+          <height>21</height>
+        </rect>
+      </property>
+      <widget class="QMenu" name="menuFile">
+        <property name="title">
+          <string>&amp;File</string>
+        </property>
+      </widget>
+      <widget class="QMenu" name="menuSettings">
+        <property name="title">
+          <string>&amp;Settings</string>
+        </property>
+        <addaction name="actionPreferences" />
+        <addaction name="separator" />
+        <addaction name="actionExit" />
+      </widget>
+      <widget class="QMenu" name="menuTools">
+        <property name="title">
+          <string>&amp;Tools</string>
+        </property>
+        <addaction name="actionClearHistory" />
+      </widget>
+      <widget class="QMenu" name="menuHelp">
+        <property name="title">
+          <string>&amp;Help</string>
+        </property>
+        <addaction name="actionAbout" />
+      </widget>
+      <addaction name="menuFile" />
+      <addaction name="menuSettings" />
+      <addaction name="menuTools" />
+      <addaction name="menuHelp" />
+    </widget>
+    <widget class="QStatusBar" name="statusbar" />
+    <action name="actionPreferences">
+      <property name="text">
+        <string>&amp;Preferences</string>
+      </property>
+    </action>
+    <action name="actionExit">
+      <property name="text">
+        <string>&amp;Exit</string>
+      </property>
+    </action>
+    <action name="actionClearHistory">
+      <property name="text">
+        <string>&amp;Clear History</string>
+      </property>
+    </action>
+    <action name="actionAbout">
+      <property name="text">
+        <string>&amp;About</string>
+      </property>
+    </action>
   </widget>
-  <widget class="QMenuBar" name="menubar">
-   <property name="geometry">
-    <rect>
-     <x>0</x>
-     <y>0</y>
-     <width>1200</width>
-     <height>21</height>
-    </rect>
-   </property>
-   <widget class="QMenu" name="menuFile">
-    <property name="title">
-     <string>&amp;File</string>
-    </property>
-   </widget>
-   <widget class="QMenu" name="menuSettings">
-    <property name="title">
-     <string>&amp;Settings</string>
-    </property>
-    <addaction name="actionPreferences"/>
-    <addaction name="separator"/>
-    <addaction name="actionExit"/>
-   </widget>
-   <widget class="QMenu" name="menuTools">
-    <property name="title">
-     <string>&amp;Tools</string>
-    </property>
-    <addaction name="actionClearHistory"/>
-   </widget>
-   <widget class="QMenu" name="menuHelp">
-    <property name="title">
-     <string>&amp;Help</string>
-    </property>
-    <addaction name="actionAbout"/>
-   </widget>
-   <addaction name="menuFile"/>
-   <addaction name="menuSettings"/>
-   <addaction name="menuTools"/>
-   <addaction name="menuHelp"/>
-  </widget>
-  <widget class="QStatusBar" name="statusbar"/>
-  <action name="actionPreferences">
-   <property name="text">
-    <string>&amp;Preferences</string>
-   </property>
-  </action>
-  <action name="actionExit">
-   <property name="text">
-    <string>&amp;Exit</string>
-   </property>
-  </action>
-  <action name="actionClearHistory">
-   <property name="text">
-    <string>&amp;Clear History</string>
-   </property>
-  </action>
-  <action name="actionAbout">
-   <property name="text">
-    <string>&amp;About</string>
-   </property>
-  </action>
- </widget>
- <resources>
-  <include location="../resources/resources.qrc"/>
- </resources>
- <connections/>
+  <resources>
+    <include location="../resources/resources.qrc" />
+  </resources>
+  <connections />
 </ui>

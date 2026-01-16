@@ -88,20 +88,6 @@ void MainWindow::setupDynamicUI()
     // 配置停止位
     ui->stopBitsComboBox->addItems({"1", "1.5", "2"});
 
-    // 配置发送区（QComboBox with editable mode）
-    // 添加预设命令
-    QStringList presetCommands = {
-        "AT",
-        "AT+RST",
-        "AT+CWMODE=1",
-        "AT+CWJAP=",
-        "AT+CWLIF",
-        "AT+CIFSR",
-        "AT+CIPSTART="};
-    ui->sendArea->addItems(presetCommands);
-    ui->sendArea->setCurrentIndex(-1); // 初始为空
-    ui->sendArea->setMaximumHeight(30);
-
     // 配置接收区：只读日志区域
     ui->receiveArea->setStyleSheet("QPlainTextEdit { font-family: 'Courier New', monospace; font-size: 10pt; }");
     ui->receiveArea->setReadOnly(true);
@@ -109,6 +95,7 @@ void MainWindow::setupDynamicUI()
     // 配置终端输入框
     ui->terminalInput->setStyleSheet("QLineEdit { font-family: 'Courier New', monospace; font-size: 10pt; }");
     ui->terminalPrompt->setStyleSheet("QLabel { font-family: 'Courier New', monospace; font-size: 10pt; color: green; font-weight: bold; }");
+    ui->terminalHexMode->setCheckState(Qt::Unchecked);
     
     // 配置快捷指令表
     ui->commandTableLayout->setSpacing(5);
@@ -123,9 +110,7 @@ void MainWindow::connectSignals()
     // 连接按钮
     connect(ui->connectButton, &QPushButton::clicked, this, &MainWindow::onConnectClicked);
     connect(ui->disconnectButton, &QPushButton::clicked, this, &MainWindow::onDisconnectClicked);
-    connect(ui->sendButton, &QPushButton::clicked, this, &MainWindow::onSendDataClicked);
     connect(ui->clearReceiveButton, &QPushButton::clicked, this, &MainWindow::onClearReceiveArea);
-    connect(ui->clearSendButton, &QPushButton::clicked, this, &MainWindow::onClearSendArea);
     connect(ui->refreshButton, &QPushButton::clicked, this, &MainWindow::onRefreshPorts);
 
     // 连接菜单信号
@@ -156,7 +141,7 @@ void MainWindow::connectSignals()
         
         // 发送到串口
         if (serialPort && serialPort->isOpen()) {
-            if (ui->hexModeCheckBox->isChecked()) {
+            if (ui->terminalHexMode->isChecked()) {
                 serialPort->write(command, SerialPort::DataFormat::HEX);
             } else {
                 serialPort->write(command, SerialPort::DataFormat::ASCII);
@@ -255,41 +240,11 @@ void MainWindow::onDisconnectClicked()
     }
 }
 
-void MainWindow::onSendDataClicked()
-{
-    if (!serialPort || !serialPort->isOpen())
-    {
-        QMessageBox::warning(this, "错误", "串口未连接");
-        return;
-    }
-
-    QString data = ui->sendArea->currentText();
-    if (data.isEmpty())
-    {
-        QMessageBox::warning(this, "错误", "请输入要发送的数据");
-        return;
-    }
-
-    if (ui->hexModeCheckBox->isChecked())
-    {
-        serialPort->write(data, SerialPort::DataFormat::HEX);
-    }
-    else
-    {
-        serialPort->write(data, SerialPort::DataFormat::ASCII);
-    }
-}
-
 void MainWindow::onClearReceiveArea()
 {
     ui->receiveArea->clear();
     bytesReceived = 0;
     statusBar()->showMessage("接收: 0 字节");
-}
-
-void MainWindow::onClearSendArea()
-{
-    ui->sendArea->setCurrentIndex(-1); // 清空编辑框内容，但保留历史
 }
 
 void MainWindow::onRefreshPorts()
@@ -323,7 +278,7 @@ void MainWindow::updateConnectionStatus(bool connected)
         ui->statusLabel->setStyleSheet("color: #00a86b; font-weight: bold;");
         ui->connectButton->setEnabled(false);
         ui->disconnectButton->setEnabled(true);
-        ui->sendButton->setEnabled(true);
+        ui->terminalInput->setEnabled(true);
         ui->portComboBox->setEnabled(false);
         ui->baudRateSpinBox->setEnabled(false);
     }
@@ -333,7 +288,7 @@ void MainWindow::updateConnectionStatus(bool connected)
         ui->statusLabel->setStyleSheet("color: #6c757d; font-weight: bold;");
         ui->connectButton->setEnabled(true);
         ui->disconnectButton->setEnabled(false);
-        ui->sendButton->setEnabled(false);
+        ui->terminalInput->setEnabled(false);
         ui->portComboBox->setEnabled(true);
         ui->baudRateSpinBox->setEnabled(true);
     }

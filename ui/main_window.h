@@ -38,9 +38,7 @@ private slots:
     // 串口相关槽
     void onConnectClicked();
     void onDisconnectClicked();
-    void onSendDataClicked();
     void onClearReceiveArea();
-    void onClearSendArea();
     void onRefreshPorts();
     
     // 快捷指令槽
