@@ -43,6 +43,10 @@ private slots:
     void onClearReceiveArea();
     void onRefreshPorts();
     
+    // 窗口切换槽
+    void onSwitchToATCommand();
+    void onSwitchToLog();
+    
     // 快捷指令槽
     void onQuickCommandButtonClicked(int index);
     void onQuickCommandReturnPressed(int index);

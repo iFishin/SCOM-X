@@ -129,6 +129,10 @@ void MainWindow::connectSignals()
     connect(ui->actionExit, &QAction::triggered, this, &QApplication::quit);
     connect(ui->actionAbout, &QAction::triggered, this, &MainWindow::onAboutAction);
 
+    // 连接窗口切换菜单
+    connect(ui->actionATCommand, &QAction::triggered, this, &MainWindow::onSwitchToATCommand);
+    connect(ui->actionLog, &QAction::triggered, this, &MainWindow::onSwitchToLog);
+
     // 连接设置变化
     connect(ui->portComboBox, QOverload<int>::of(&QComboBox::currentIndexChanged),
             this, &MainWindow::onSettingChanged);
@@ -664,5 +668,35 @@ void MainWindow::onHeaderCheckBoxToggled(bool checked)
     }
     
     qDebug() << "[MainWindow] Header checkbox" << (checked ? "checked - 全选" : "unchecked - 取消全选");
+}
+
+void MainWindow::onSwitchToATCommand()
+{
+    // Show AT Command window components
+    ui->settingsGroupBox->setVisible(true);
+    ui->hotkeysGroupBox->setVisible(true);
+    ui->receivedDataGroupBox->setVisible(true);
+    ui->commandScrollArea->setVisible(true);
+    
+    // Update window title
+    setWindowTitle("SCOM-X - AT Command");
+    
+    qDebug() << "[MainWindow] Switched to AT Command window";
+}
+
+void MainWindow::onSwitchToLog()
+{
+    // Hide AT Command specific components
+    ui->settingsGroupBox->setVisible(false);
+    ui->hotkeysGroupBox->setVisible(false);
+    ui->commandScrollArea->setVisible(false);
+    
+    // Show only received data
+    ui->receivedDataGroupBox->setVisible(true);
+    
+    // Update window title
+    setWindowTitle("SCOM-X - Log");
+    
+    qDebug() << "[MainWindow] Switched to Log window";
 }
 

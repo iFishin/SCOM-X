@@ -215,9 +215,6 @@
                <verstretch>0</verstretch>
               </sizepolicy>
              </property>
-             <property name="maximumWidth">
-              <number>24</number>
-             </property>
              <property name="text">
               <string>&gt;</string>
              </property>
@@ -328,7 +325,7 @@
           <rect>
            <x>0</x>
            <y>0</y>
-           <width>585</width>
+           <width>485</width>
            <height>748</height>
           </rect>
          </property>
@@ -353,11 +350,8 @@
              </property>
              <item row="0" column="0">
               <widget class="QCheckBox" name="headerCheck">
-               <property name="objectName">
-                <string>commandRowCheckbox</string>
-               </property>
                <property name="text">
-                <string></string>
+                <string/>
                </property>
               </widget>
              </item>
@@ -427,7 +421,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1200</width>
+     <width>1000</width>
      <height>21</height>
     </rect>
    </property>
@@ -456,7 +450,15 @@
     </property>
     <addaction name="actionAbout"/>
    </widget>
+   <widget class="QMenu" name="menuWindow">
+    <property name="title">
+     <string>Window</string>
+    </property>
+    <addaction name="actionATCommand"/>
+    <addaction name="actionLog"/>
+   </widget>
    <addaction name="menuFile"/>
+   <addaction name="menuWindow"/>
    <addaction name="menuSettings"/>
    <addaction name="menuTools"/>
    <addaction name="menuHelp"/>
@@ -480,6 +482,22 @@
   <action name="actionAbout">
    <property name="text">
     <string>&amp;About</string>
+   </property>
+  </action>
+  <action name="actionATCommand">
+   <property name="text">
+    <string>&amp;ATCommand</string>
+   </property>
+   <property name="shortcut">
+    <string>F1</string>
+   </property>
+  </action>
+  <action name="actionLog">
+   <property name="text">
+    <string>&amp;Log</string>
+   </property>
+   <property name="shortcut">
+    <string>F2</string>
    </property>
   </action>
  </widget>
