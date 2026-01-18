@@ -44,6 +44,7 @@ private slots:
     void onRefreshPorts();
     
     // 窗口切换槽
+    void onSwitchToMain();
     void onSwitchToATCommand();
     void onSwitchToLog();
     

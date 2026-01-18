@@ -454,6 +454,7 @@
     <property name="title">
      <string>Window</string>
     </property>
+    <addaction name="actionMain"/>
     <addaction name="actionATCommand"/>
     <addaction name="actionLog"/>
    </widget>
@@ -484,12 +485,20 @@
     <string>&amp;About</string>
    </property>
   </action>
+  <action name="actionMain">
+   <property name="text">
+    <string>&amp;Main</string>
+   </property>
+   <property name="shortcut">
+    <string>F1</string>
+   </property>
+  </action>
   <action name="actionATCommand">
    <property name="text">
     <string>&amp;ATCommand</string>
    </property>
    <property name="shortcut">
-    <string>F1</string>
+    <string>F2</string>
    </property>
   </action>
   <action name="actionLog">
@@ -497,7 +506,7 @@
     <string>&amp;Log</string>
    </property>
    <property name="shortcut">
-    <string>F2</string>
+    <string>F3</string>
    </property>
   </action>
  </widget>
