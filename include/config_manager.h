@@ -2,6 +2,7 @@
 #define CONFIG_MANAGER_H
 
 #include <QString>
+#include <QStringList>
 #include <QJsonObject>
 #include <QJsonDocument>
 
@@ -36,6 +37,10 @@ public:
     int getWindowWidth() const;
     int getWindowHeight() const;
     int getLineEndIndex() const;
+
+    // 获取/设置终端历史记录
+    QStringList getTerminalHistory() const;
+    void setTerminalHistory(const QStringList &history);
 
     // 设置配置值
     void setSerialPort(const QString &port);

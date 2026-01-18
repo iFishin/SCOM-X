@@ -71,6 +71,9 @@ private:
     void saveSettings();
     void updateConnectionStatus(bool connected);
     QString getLineEndSuffix() const;  // 获取行尾符
+    void loadTerminalHistory();  // 加载终端历史记录
+    void addTerminalHistory(const QString &command);  // 添加终端历史记录
+    void onHeaderCheckBoxToggled(bool checked);  // 全选/取消全选
 
     // UI 类指针（由 Qt 自动生成的 ui_main_window.h）
     std::unique_ptr<Ui::MainWindow> ui;

@@ -90,12 +90,14 @@ void MainWindow::setupDynamicUI()
     ui->baudRateSpinBox->setMaximumWidth(120);
 
     // 配置接收区：只读日志区域
-    ui->receiveArea->setStyleSheet("QPlainTextEdit { font-family: 'Courier New', monospace; font-size: 10pt; }");
+    ui->receiveArea->setObjectName("receiveArea");
     ui->receiveArea->setReadOnly(true);
     
-    // 配置终端输入框
-    ui->terminalInput->setStyleSheet("QLineEdit { font-family: 'Courier New', monospace; font-size: 10pt; }");
-    ui->terminalPrompt->setStyleSheet("QLabel { font-family: 'Courier New', monospace; font-size: 10pt; color: green; font-weight: bold; }");
+    // 配置终端输入框（QComboBox with history）
+    ui->terminalInput->setObjectName("terminalInput");
+    ui->terminalInput->setMaxVisibleItems(10);
+    ui->terminalInput->setMaximumHeight(30);
+    ui->terminalPrompt->setObjectName("terminalPrompt");
     ui->terminalHexMode->setCheckState(Qt::Unchecked);
     
     // 配置行尾符下拉框（默认选择 0D0A - CRLF）
@@ -108,6 +110,9 @@ void MainWindow::setupDynamicUI()
 
     // 建立快捷指令行（从行1开始，行0是表头）
     rebuildCommandTable(currentCommandRows);
+    
+    // 加载终端命令历史
+    loadTerminalHistory();
 }
 
 void MainWindow::connectSignals()
@@ -130,9 +135,9 @@ void MainWindow::connectSignals()
     connect(ui->baudRateSpinBox, QOverload<int>::of(&QComboBox::currentIndexChanged),
             this, &MainWindow::onSettingChanged);
 
-    // 连接终端输入框的 Return 键
-    connect(ui->terminalInput, &QLineEdit::returnPressed, this, [this]() {
-        QString command = ui->terminalInput->text().trimmed();
+    // 连接终端输入框的 Return 键 - QComboBox 需要连接内部 lineEdit 的信号
+    connect(ui->terminalInput->lineEdit(), &QLineEdit::returnPressed, this, [this]() {
+        QString command = ui->terminalInput->lineEdit()->text().trimmed();
         if (command.isEmpty()) {
             return;
         }
@@ -164,8 +169,11 @@ void MainWindow::connectSignals()
             ui->receiveArea->insertPlainText("[错误] 串口未连接\n");
         }
         
+        // 将命令添加到历史记录
+        addTerminalHistory(command);
+        
         // 清空输入框，焦点保留在输入框
-        ui->terminalInput->clear();
+        // ui->terminalInput->lineEdit()->clear();
     });
 
     // 连接串口信号
@@ -197,6 +205,9 @@ void MainWindow::connectSignals()
         connect(serialPort.get(), &SerialPort::errorOccurred,
                 this, &MainWindow::onSerialError);
     }
+
+    // 连接表头复选框的全选/取消全选
+    connect(ui->headerCheck, &QCheckBox::toggled, this, &MainWindow::onHeaderCheckBoxToggled);
 }
 
 void MainWindow::applyStyles()
@@ -287,7 +298,7 @@ void MainWindow::updateConnectionStatus(bool connected)
     if (connected)
     {
         ui->statusLabel->setText("已连接");
-        ui->statusLabel->setStyleSheet("color: #00a86b; font-weight: bold;");
+        ui->statusLabel->setProperty("connectionStatus", "connected");
         ui->connectButton->setEnabled(false);
         ui->disconnectButton->setEnabled(true);
         ui->terminalInput->setEnabled(true);
@@ -297,13 +308,17 @@ void MainWindow::updateConnectionStatus(bool connected)
     else
     {
         ui->statusLabel->setText("已断开连接");
-        ui->statusLabel->setStyleSheet("color: #6c757d; font-weight: bold;");
+        ui->statusLabel->setProperty("connectionStatus", "disconnected");
         ui->connectButton->setEnabled(true);
         ui->disconnectButton->setEnabled(false);
         ui->terminalInput->setEnabled(false);
         ui->portComboBox->setEnabled(true);
         ui->baudRateSpinBox->setEnabled(true);
     }
+    
+    // 重新应用样式以更新属性选择器
+    ui->statusLabel->style()->unpolish(ui->statusLabel);
+    ui->statusLabel->style()->polish(ui->statusLabel);
 }
 
 void MainWindow::closeEvent(QCloseEvent *event)
@@ -481,10 +496,40 @@ void MainWindow::rebuildCommandTable(int rowCount)
     // 创建新的快捷指令行
     for (int i = 0; i < rowCount; ++i)
     {
-        // 复选框
+        // 复选框（行选择）
         QCheckBox *checkbox = new QCheckBox();
+        checkbox->setObjectName("commandRowCheckbox");  // 设置 id，方便 QSS 引用
         commandCheckboxes.push_back(checkbox);
         ui->commandTableLayout->addWidget(checkbox, i + 1, 0, Qt::AlignCenter);
+        
+        // 连接复选框的 toggled 信号，用于更新表头复选框状态
+        connect(checkbox, &QCheckBox::toggled, this, [this]() {
+            // 检查是否全部选中或全部未选中
+            bool allChecked = !commandCheckboxes.empty();
+            bool allUnchecked = !commandCheckboxes.empty();
+            
+            for (QCheckBox *cb : commandCheckboxes) {
+                if (!cb->isChecked()) {
+                    allChecked = false;
+                }
+                if (cb->isChecked()) {
+                    allUnchecked = false;
+                }
+            }
+            
+            // 更新表头复选框状态
+            ui->headerCheck->blockSignals(true);
+            if (allChecked) {
+                ui->headerCheck->setChecked(true);
+            } else if (allUnchecked) {
+                ui->headerCheck->setChecked(false);
+            } else {
+                // 中间状态（部分选中）- 设置为不确定状态
+                ui->headerCheck->setTristate(true);
+                ui->headerCheck->setCheckState(Qt::PartiallyChecked);
+            }
+            ui->headerCheck->blockSignals(false);
+        });
 
         // 发送按钮
         QPushButton *button = new QPushButton(QString("Send %1").arg(i + 1));
@@ -496,6 +541,7 @@ void MainWindow::rebuildCommandTable(int rowCount)
 
         // 数据输入框（占据尽可能多的空间）
         QLineEdit *inputField = new QLineEdit();
+        inputField->setObjectName("commandInput");  // 设置 id
         inputField->setPlaceholderText("Input command...");
         commandInputs.push_back(inputField);
         ui->commandTableLayout->addWidget(inputField, i + 1, 2);
@@ -504,12 +550,14 @@ void MainWindow::rebuildCommandTable(int rowCount)
 
         // HEX 复选框
         QCheckBox *hexCheckbox = new QCheckBox();
+        hexCheckbox->setObjectName("commandHexCheckbox");  // 设置 id
         hexCheckbox->setToolTip("以十六进制发送");
         commandHexCheckboxes.push_back(hexCheckbox);
         ui->commandTableLayout->addWidget(hexCheckbox, i + 1, 3, Qt::AlignCenter);
 
         // 加回车复选框
         QCheckBox *endCheckbox = new QCheckBox();
+        endCheckbox->setObjectName("commandEndCheckbox");  // 设置 id
         endCheckbox->setChecked(true);
         endCheckbox->setToolTip("自动添加换行符");
         commandEndCheckboxes.push_back(endCheckbox);
@@ -517,6 +565,7 @@ void MainWindow::rebuildCommandTable(int rowCount)
 
         // 间隔输入框
         QLineEdit *intervalField = new QLineEdit();
+        intervalField->setObjectName("commandInterval");  // 设置 id
         intervalField->setMaximumWidth(50);
         intervalField->setPlaceholderText("0");
         intervalField->setAlignment(Qt::AlignCenter);
@@ -546,5 +595,74 @@ QString MainWindow::getLineEndSuffix() const
         default:
             return "";
     }
+}
+
+void MainWindow::loadTerminalHistory()
+{
+    if (!configManager) {
+        return;
+    }
+    
+    QStringList history = configManager->getTerminalHistory();
+    
+    // 清空现有项目（如果有）
+    ui->terminalInput->clear();
+    
+    // 添加历史记录到下拉框
+    for (const QString &cmd : history) {
+        if (!cmd.isEmpty()) {
+            ui->terminalInput->addItem(cmd);
+        }
+    }
+    
+    qDebug() << "[MainWindow] Loaded" << history.size() << "terminal history items";
+}
+
+void MainWindow::addTerminalHistory(const QString &command)
+{
+    if (command.isEmpty() || !configManager) {
+        return;
+    }
+    
+    // 检查是否已存在此命令
+    int existingIndex = ui->terminalInput->findText(command);
+    if (existingIndex >= 0) {
+        // 如果已存在，将其移到最前面
+        ui->terminalInput->removeItem(existingIndex);
+    }
+    
+    // 添加到开头
+    ui->terminalInput->insertItem(0, command);
+    ui->terminalInput->setCurrentIndex(0);
+    
+    // 限制历史记录数量（最多保存 50 条）
+    while (ui->terminalInput->count() > 50) {
+        ui->terminalInput->removeItem(ui->terminalInput->count() - 1);
+    }
+    
+    // 保存历史记录到配置
+    QStringList history;
+    for (int i = 0; i < ui->terminalInput->count(); ++i) {
+        history.append(ui->terminalInput->itemText(i));
+    }
+    configManager->setTerminalHistory(history);
+    configManager->saveConfig();
+    
+    qDebug() << "[MainWindow] Added terminal history:" << command;
+}
+
+void MainWindow::onHeaderCheckBoxToggled(bool checked)
+{
+    // 遍历所有快捷指令复选框，根据表头复选框的状态设置它们
+    for (QCheckBox *checkbox : commandCheckboxes) {
+        if (checkbox) {
+            // 使用 blockSignals 防止递归回调
+            checkbox->blockSignals(true);
+            checkbox->setChecked(checked);
+            checkbox->blockSignals(false);
+        }
+    }
+    
+    qDebug() << "[MainWindow] Header checkbox" << (checked ? "checked - 全选" : "unchecked - 取消全选");
 }
 

@@ -110,6 +110,7 @@ void ConfigManager::initializeDefaults() {
     uiConfig["windowWidth"] = 1200;
     uiConfig["windowHeight"] = 800;
     uiConfig["lineEndIndex"] = 0;  // 默认 0D0A (CRLF)
+    uiConfig["terminalHistory"] = QJsonArray();  // 空的终端历史
 
     configData["ui"] = uiConfig;
 }
@@ -166,6 +167,28 @@ int ConfigManager::getWindowHeight() const {
 
 int ConfigManager::getLineEndIndex() const {
     return configData["ui"].toObject()["lineEndIndex"].toInt(0);  // 默认 0 (0D0A)
+}
+
+QStringList ConfigManager::getTerminalHistory() const {
+    QJsonArray historyArray = configData["ui"].toObject()["terminalHistory"].toArray();
+    QStringList history;
+    
+    for (const QJsonValue &value : historyArray) {
+        history.append(value.toString());
+    }
+    
+    return history;
+}
+
+void ConfigManager::setTerminalHistory(const QStringList &history) {
+    QJsonArray historyArray;
+    for (const QString &cmd : history) {
+        historyArray.append(cmd);
+    }
+    
+    QJsonObject ui = configData["ui"].toObject();
+    ui["terminalHistory"] = historyArray;
+    configData["ui"] = ui;
 }
 
 // Setters - 串口配置
