@@ -11,6 +11,7 @@
 class SerialPort;
 class ConfigManager;
 class PreferencesDialog;
+class ATCommandPage;
 
 // 前向声明 UI 类（由 Qt 自动生成）
 namespace Ui {
@@ -88,6 +89,9 @@ private:
     
     // 首选项对话框
     std::unique_ptr<PreferencesDialog> preferencesDialog;
+    
+    // AT Command 页面
+    std::unique_ptr<ATCommandPage> atCommandPage;
 
     // 动态创建的快捷指令组件（不在 UI 文件中定义）
     std::vector<QCheckBox*> commandCheckboxes;

@@ -3,6 +3,7 @@
 #include "serial_port.h"
 #include "config_manager.h"
 #include "preferences_dialog.h"
+#include "at_command_page.h"
 
 #include <QVBoxLayout>
 #include <QHBoxLayout>
@@ -49,6 +50,10 @@ MainWindow::MainWindow(QWidget *parent)
 
     // 连接信号槽
     connectSignals();
+    
+    // 创建 AT Command 页面（但暂时隐藏）
+    atCommandPage = std::make_unique<ATCommandPage>(configManager.get(), this);
+    atCommandPage->hide();
 
     // 加载之前保存的设置
     loadSettings();
@@ -679,6 +684,11 @@ void MainWindow::onSwitchToMain()
     ui->receivedDataGroupBox->setVisible(true);
     ui->commandScrollArea->setVisible(true);
     
+    // Hide AT Command page
+    if (atCommandPage) {
+        atCommandPage->hide();
+    }
+    
     // Update window title
     setWindowTitle("SCOM-X");
     
@@ -687,11 +697,18 @@ void MainWindow::onSwitchToMain()
 
 void MainWindow::onSwitchToATCommand()
 {
-    // Show AT Command window components
-    ui->settingsGroupBox->setVisible(true);
-    ui->hotkeysGroupBox->setVisible(true);
-    ui->receivedDataGroupBox->setVisible(true);
-    ui->commandScrollArea->setVisible(true);
+    // Hide main components
+    ui->settingsGroupBox->setVisible(false);
+    ui->hotkeysGroupBox->setVisible(false);
+    ui->receivedDataGroupBox->setVisible(false);
+    ui->commandScrollArea->setVisible(false);
+    
+    // Show AT Command page
+    if (atCommandPage) {
+        atCommandPage->show();
+        atCommandPage->raise();  // 确保页面在最前面
+        atCommandPage->setFocus();
+    }
     
     // Update window title
     setWindowTitle("SCOM-X - AT Command");
@@ -701,6 +718,11 @@ void MainWindow::onSwitchToATCommand()
 
 void MainWindow::onSwitchToLog()
 {
+    // Hide AT Command page
+    if (atCommandPage) {
+        atCommandPage->hide();
+    }
+    
     // Hide AT Command specific components
     ui->settingsGroupBox->setVisible(false);
     ui->hotkeysGroupBox->setVisible(false);

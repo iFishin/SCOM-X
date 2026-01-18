@@ -18,6 +18,7 @@ find_package(Qt6 REQUIRED COMPONENTS
 # UI 文件（Qt Designer XML）
 set(UI_FILES
     ui/main_window.ui
+    ui/pages/at_command_page.ui
 )
 
 # 源文件
@@ -28,6 +29,7 @@ set(SOURCES
     src/config_manager.cpp
     src/preferences_dialog.cpp
     src/splash_screen.cpp
+    ui/pages/at_command_page.cpp
 )
 
 # 头文件
@@ -37,6 +39,7 @@ set(HEADERS
     include/config_manager.h
     include/preferences_dialog.h
     include/splash_screen.h
+    include/at_command_page.h
 )
 
 # 资源文件

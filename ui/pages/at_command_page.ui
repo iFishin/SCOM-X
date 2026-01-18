@@ -1,0 +1,210 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>ATCommandPage</class>
+ <widget class="QWidget" name="ATCommandPage">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>800</width>
+    <height>600</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>AT Command Editor</string>
+  </property>
+  <layout class="QVBoxLayout" name="mainLayout">
+   <!-- 顶部标题栏 -->
+   <item>
+    <layout class="QHBoxLayout" name="headerLayout">
+     <item>
+      <widget class="QLabel" name="pageTitle">
+       <property name="text">
+        <string>AT Command File Editor</string>
+       </property>
+       <property name="objectName">
+        <string>page_title</string>
+       </property>
+       <property name="maximumWidth">
+        <number>300</number>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignVCenter|Qt::AlignLeft</set>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <spacer name="headerSpacer">
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
+       </property>
+       <property name="sizeHint" stdset="0">
+        <size>
+         <width>40</width>
+         <height>20</height>
+        </size>
+       </property>
+      </spacer>
+     </item>
+     <item>
+      <widget class="QLabel" name="fileStatusLabel">
+       <property name="text">
+        <string></string>
+       </property>
+       <property name="objectName">
+        <string>file_status_label</string>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+   <!-- 主编辑区 -->
+   <item>
+    <layout class="QHBoxLayout" name="contentLayout">
+     <!-- 左侧按钮容器 -->
+     <item>
+      <widget class="QWidget" name="leftButtonsContainer">
+       <property name="maximumWidth">
+        <number>30</number>
+       </property>
+       <layout class="QVBoxLayout" name="leftButtonsLayout">
+        <property name="leftMargin">
+         <number>0</number>
+        </property>
+        <property name="topMargin">
+         <number>0</number>
+        </property>
+        <property name="rightMargin">
+         <number>0</number>
+        </property>
+        <property name="bottomMargin">
+         <number>0</number>
+        </property>
+        <property name="spacing">
+         <number>0</number>
+        </property>
+        <!-- 保存按钮 -->
+        <item>
+         <widget class="QPushButton" name="saveButton">
+          <property name="text">
+           <string></string>
+          </property>
+          <property name="objectName">
+           <string>icon_button</string>
+          </property>
+          <property name="fixedSize">
+           <size>
+            <width>30</width>
+            <height>30</height>
+           </size>
+          </property>
+          <property name="toolTip">
+           <string>Save AT command file (Ctrl+S)</string>
+          </property>
+         </widget>
+        </item>
+        <!-- 导入按钮 -->
+        <item>
+         <widget class="QPushButton" name="importButton">
+          <property name="text">
+           <string></string>
+          </property>
+          <property name="objectName">
+           <string>icon_button</string>
+          </property>
+          <property name="fixedSize">
+           <size>
+            <width>30</width>
+            <height>30</height>
+           </size>
+          </property>
+          <property name="toolTip">
+           <string>Import AT command file</string>
+          </property>
+         </widget>
+        </item>
+        <!-- 展开/收起按钮 -->
+        <item>
+         <widget class="QPushButton" name="expandButton">
+          <property name="text">
+           <string></string>
+          </property>
+          <property name="objectName">
+           <string>icon_button</string>
+          </property>
+          <property name="fixedSize">
+           <size>
+            <width>30</width>
+            <height>30</height>
+           </size>
+          </property>
+          <property name="toolTip">
+           <string>Toggle path panel</string>
+          </property>
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Fixed" vsizetype="Expanding">
+            <horstretch>0</horstretch>
+            <verstretch>1</verstretch>
+           </sizepolicy>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </widget>
+     </item>
+     <!-- 中间编辑区 -->
+     <item>
+      <widget class="QTextEdit" name="commandTextEdit">
+       <property name="objectName">
+        <string>text_input_layout_2</string>
+       </property>
+       <property name="acceptRichText">
+        <bool>false</bool>
+       </property>
+       <property name="lineWrapMode">
+        <enum>QTextEdit::WidgetWidth</enum>
+       </property>
+      </widget>
+     </item>
+     <!-- 右侧路径选择区 -->
+     <item>
+      <widget class="QScrollArea" name="pathScrollArea">
+       <property name="widgetResizable">
+        <bool>true</bool>
+        </property>
+       <property name="verticalScrollBarPolicy">
+        <enum>Qt::ScrollBarAsNeeded</enum>
+       </property>
+       <property name="horizontalScrollBarPolicy">
+        <enum>Qt::ScrollBarAlwaysOff</enum>
+       </property>
+       <widget class="QGroupBox" name="pathGroupBox">
+        <property name="title">
+         <string>AT Command Paths</string>
+        </property>
+        <layout class="QGridLayout" name="pathGridLayout">
+         <property name="leftMargin">
+          <number>5</number>
+         </property>
+         <property name="topMargin">
+          <number>5</number>
+         </property>
+         <property name="rightMargin">
+          <number>5</number>
+         </property>
+         <property name="bottomMargin">
+          <number>5</number>
+         </property>
+        </layout>
+       </widget>
+      </widget>
+     </item>
+    </layout>
+   </item>
+  </layout>
+ </widget>
+ <resources>
+  <include location="../../resources/resources.qrc"/>
+ </resources>
+ <connections/>
+</ui>
