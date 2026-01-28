@@ -4,6 +4,10 @@
 #include "config_manager.h"
 #include "preferences_dialog.h"
 #include "at_command_page.h"
+#include "log_page.h"
+#include "receive_data_page.h"
+#include "log_viewer_dialog.h"
+#include "operation_logger.h"
 
 #include <QVBoxLayout>
 #include <QHBoxLayout>
@@ -32,32 +36,80 @@
 #include <QKeyEvent>
 #include <QTextCursor>
 
+// 外部声明日志函数
+extern void debugLog(const QString &msg);
+
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent), ui(std::make_unique<Ui::MainWindow>()), 
       configManager(std::make_unique<ConfigManager>()), serialPort(std::make_unique<SerialPort>())
 {
+    debugLog("[MainWindow] 1. 初始化配置管理器...");
     // 初始化配置管理器
     configManager->initialize();
+    debugLog("[MainWindow] 1. OK - 配置管理器初始化完成");
 
+    debugLog("[MainWindow] 2. setupUi...");
     // 从 .ui 文件生成的 UI 代码（由 Qt 自动生成）
     ui->setupUi(this);
+    debugLog("[MainWindow] 2. OK - setupUi 完成");
 
+    debugLog("[MainWindow] 3. applyStyles...");
     // 应用样式
     applyStyles();
+    debugLog("[MainWindow] 3. OK - 样式应用完成");
 
+    debugLog("[MainWindow] 4. setupDynamicUI...");
     // 构建动态 UI（快捷指令表格等）
     setupDynamicUI();
+    debugLog("[MainWindow] 4. OK - 动态UI完成");
 
+    debugLog("[MainWindow] 5. connectSignals...");
     // 连接信号槽
     connectSignals();
+    debugLog("[MainWindow] 5. OK - 信号槽连接完成");
     
+    debugLog("[MainWindow] 6. 创建 AT Command 页面...");
     // 创建 AT Command 页面（但暂时隐藏）
-    atCommandPage = std::make_unique<ATCommandPage>(configManager.get(), this);
-    atCommandPage->hide();
+    try {
+        atCommandPage = std::make_unique<ATCommandPage>(configManager.get(), this);
+        atCommandPage->hide();
+        debugLog("[MainWindow] 6. OK - AT Command 页面创建完成");
+    } catch (const std::exception &e) {
+        debugLog(QString("[MainWindow] 6. FAILED - AT Command 页面创建失败: %1").arg(e.what()));
+    }
+    
+    debugLog("[MainWindow] 7. 创建 Log 页面...");
+    // 创建 Log 页面
+    try {
+        logPage = std::make_unique<LogPage>(this);
+        logPage->hide();
+        debugLog("[MainWindow] 7. OK - Log 页面创建完成");
+    } catch (const std::exception &e) {
+        debugLog(QString("[MainWindow] 7. FAILED - Log 页面创建失败: %1").arg(e.what()));
+    }
+    
+    debugLog("[MainWindow] 8. 创建 Receive Data 页面...");
+    // 创建 Receive Data 页面
+    try {
+        receiveDataPage = std::make_unique<ReceiveDataPage>(
+            ui->receiveArea,
+            ui->terminalInput,
+            ui->terminalHexMode,
+            ui->lineEndComboBox,
+            this
+        );
+        receiveDataPage->hide();
+        debugLog("[MainWindow] 8. OK - Receive Data 页面创建完成");
+    } catch (const std::exception &e) {
+        debugLog(QString("[MainWindow] 8. FAILED - Receive Data 页面创建失败: %1").arg(e.what()));
+    }
 
+    debugLog("[MainWindow] 9. 加载设置...");
     // 加载之前保存的设置
     loadSettings();
+    debugLog("[MainWindow] 9. OK - 设置加载完成");
 
+    debugLog("[MainWindow] 10. 初始化状态栏...");
     // 初始化状态栏
     QLabel *bytesReceivedLabel = new QLabel("Rec: 0 Bytes", this);
     QLabel *bytesSentLabel = new QLabel("Sent: 0 Bytes", this);
@@ -68,6 +120,20 @@ MainWindow::MainWindow(QWidget *parent)
     // 保存指针供后续使用（作为成员变量或直接使用）
     bytesReceived = 0;
     bytesSent = 0;
+    debugLog("[MainWindow] 10. OK - 状态栏初始化完成");
+    
+    debugLog("[MainWindow] 11. 初始化日志查看器...");
+    // 初始化日志查看器（但不显示）
+    logViewerDialog = nullptr;
+    debugLog("[MainWindow] 11. OK - 日志查看器初始化完成");
+    
+    debugLog("[MainWindow] 12. 初始化操作日志器...");
+    // 初始化操作日志器
+    OperationLogger::instance().initialize();
+    OperationLogger::instance().logInfo("应用启动成功");
+    debugLog("[MainWindow] 12. OK - 操作日志器初始化完成");
+    
+    debugLog("[MainWindow] ========== 构造函数完成 ==========");
 }
 
 MainWindow::~MainWindow() {
@@ -118,13 +184,18 @@ void MainWindow::setupDynamicUI()
     
     // 加载终端命令历史
     loadTerminalHistory();
+    
+    // 添加日志查看器菜单项
+    QMenu *viewMenu = menuBar()->addMenu(tr("查看(&V)"));
+    QAction *logViewerAction = viewMenu->addAction(tr("程序日志(&L)"));
+    logViewerAction->setShortcut(Qt::CTRL | Qt::SHIFT | Qt::Key_L);
+    connect(logViewerAction, &QAction::triggered, this, &MainWindow::onShowLogViewer);
 }
 
 void MainWindow::connectSignals()
 {
     // 连接按钮
     connect(ui->connectButton, &QPushButton::clicked, this, &MainWindow::onConnectClicked);
-    connect(ui->disconnectButton, &QPushButton::clicked, this, &MainWindow::onDisconnectClicked);
     connect(ui->clearReceiveButton, &QPushButton::clicked, this, &MainWindow::onClearReceiveArea);
     connect(ui->refreshButton, &QPushButton::clicked, this, &MainWindow::onRefreshPorts);
     connect(ui->moreSettingsButton, &QPushButton::clicked, this, &MainWindow::onPreferencesClicked);
@@ -138,6 +209,9 @@ void MainWindow::connectSignals()
     connect(ui->actionMain, &QAction::triggered, this, &MainWindow::onSwitchToMain);
     connect(ui->actionATCommand, &QAction::triggered, this, &MainWindow::onSwitchToATCommand);
     connect(ui->actionLog, &QAction::triggered, this, &MainWindow::onSwitchToLog);
+    
+    // 连接日志查看器菜单（如果菜单中存在日志查看器选项）
+    // 我们稍后会添加这个菜单项
 
     // 连接设置变化
     connect(ui->portComboBox, QOverload<int>::of(&QComboBox::currentIndexChanged),
@@ -218,6 +292,51 @@ void MainWindow::connectSignals()
 
     // 连接表头复选框的全选/取消全选
     connect(ui->headerCheck, &QCheckBox::toggled, this, &MainWindow::onHeaderCheckBoxToggled);
+    
+    // 连接 ReceiveDataPage 的命令发送信号
+    if (receiveDataPage) {
+        connect(receiveDataPage.get(), &ReceiveDataPage::terminalCommandEntered, this, [this](const QString &command) {
+            if (command.isEmpty()) {
+                return;
+            }
+            
+            // 获取行尾符
+            QString lineEnd = getLineEndSuffix();
+            
+            // 显示输入命令到主窗口的接收区域
+            ui->receiveArea->insertPlainText("> " + command + "\n");
+            
+            // 滚动到底部
+            QTextCursor cursor = ui->receiveArea->textCursor();
+            cursor.movePosition(QTextCursor::End);
+            ui->receiveArea->setTextCursor(cursor);
+            
+            // 发送到串口
+            if (serialPort && serialPort->isOpen()) {
+                // 拼接完整的发送数据（命令 + 行尾符）
+                QString fullCommand = command + lineEnd;
+                
+                if (ui->terminalHexMode->isChecked()) {
+                    serialPort->write(fullCommand, SerialPort::DataFormat::HEX);
+                } else {
+                    serialPort->write(fullCommand, SerialPort::DataFormat::ASCII);
+                }
+                bytesSent += fullCommand.length();
+                statusBar()->showMessage(QString("发送: %1 字节").arg(bytesSent));
+            } else {
+                ui->receiveArea->insertPlainText("[错误] 串口未连接\n");
+            }
+            
+            // 将命令添加到历史记录
+            addTerminalHistory(command);
+            
+            // 同步清空两个页面的输入框
+            ui->terminalInput->lineEdit()->clear();
+            if (receiveDataPage && receiveDataPage->getTerminalInput()) {
+                receiveDataPage->getTerminalInput()->lineEdit()->clear();
+            }
+        });
+    }
 }
 
 void MainWindow::applyStyles()
@@ -245,31 +364,35 @@ void MainWindow::onConnectClicked()
     if (!serialPort)
         return;
 
+    // 如果已连接，则执行断开操作
+    if (serialPort->isOpen())
+    {
+        serialPort->close();
+        updateConnectionStatus(false);
+        OperationLogger::instance().logSerialDisconnect();
+        return;
+    }
+
+    // 否则执行连接操作
     QString portName = ui->portComboBox->currentText();
     int baudRate = ui->baudRateSpinBox->currentText().toInt();
 
     if (portName.isEmpty())
     {
         QMessageBox::warning(this, "错误", "请选择一个串口");
+        OperationLogger::instance().logWarning("未选择串口");
         return;
     }
 
     if (serialPort->open(portName, baudRate))
     {
         updateConnectionStatus(true);
+        OperationLogger::instance().logSerialConnect(portName, baudRate);
     }
     else
     {
         QMessageBox::critical(this, "错误", "无法打开串口: " + portName);
-    }
-}
-
-void MainWindow::onDisconnectClicked()
-{
-    if (serialPort && serialPort->isOpen())
-    {
-        serialPort->close();
-        updateConnectionStatus(false);
+        OperationLogger::instance().logError(QString("无法打开串口: %1").arg(portName));
     }
 }
 
@@ -307,20 +430,20 @@ void MainWindow::updateConnectionStatus(bool connected)
 {
     if (connected)
     {
-        ui->statusLabel->setText("已连接");
+        ui->statusLabel->setText("Connected");
         ui->statusLabel->setProperty("connectionStatus", "connected");
-        ui->connectButton->setEnabled(false);
-        ui->disconnectButton->setEnabled(true);
+        ui->connectButton->setText("Disconnect");
+
         ui->terminalInput->setEnabled(true);
         ui->portComboBox->setEnabled(false);
         ui->baudRateSpinBox->setEnabled(false);
     }
     else
     {
-        ui->statusLabel->setText("已断开连接");
+        ui->statusLabel->setText("Disconnected");
         ui->statusLabel->setProperty("connectionStatus", "disconnected");
+        ui->connectButton->setText("Connect");
         ui->connectButton->setEnabled(true);
-        ui->disconnectButton->setEnabled(false);
         ui->terminalInput->setEnabled(false);
         ui->portComboBox->setEnabled(true);
         ui->baudRateSpinBox->setEnabled(true);
@@ -686,13 +809,14 @@ void MainWindow::onSwitchToMain()
     
     // Hide AT Command page
     if (atCommandPage) {
-        atCommandPage->hide();
+        atCommandPage->setVisible(false);
     }
     
     // Update window title
     setWindowTitle("SCOM-X");
     
-    qDebug() << "[MainWindow] Switched to Main window";
+    debugLog("[MainWindow] Switched to Main window");
+    OperationLogger::instance().logPageSwitch("主页面");
 }
 
 void MainWindow::onSwitchToATCommand()
@@ -703,24 +827,32 @@ void MainWindow::onSwitchToATCommand()
     ui->receivedDataGroupBox->setVisible(false);
     ui->commandScrollArea->setVisible(false);
     
-    // Show AT Command page
+    // Show AT Command page as a child widget with proper geometry
     if (atCommandPage) {
-        atCommandPage->show();
-        atCommandPage->raise();  // 确保页面在最前面
+        atCommandPage->setParent(centralWidget());
+        
+        // 计算正确的几何大小：从菜单栏下方到状态栏上方
+        QRect contentRect = centralWidget()->rect();
+        atCommandPage->setGeometry(contentRect);
+        
+        atCommandPage->setVisible(true);
+        atCommandPage->raise();
         atCommandPage->setFocus();
     }
     
     // Update window title
     setWindowTitle("SCOM-X - AT Command");
     
-    qDebug() << "[MainWindow] Switched to AT Command window";
+    debugLog("[MainWindow] Switched to AT Command window");
+    OperationLogger::instance().logPageSwitch("AT 命令页面");
 }
+
 
 void MainWindow::onSwitchToLog()
 {
     // Hide AT Command page
     if (atCommandPage) {
-        atCommandPage->hide();
+        atCommandPage->setVisible(false);
     }
     
     // Hide AT Command specific components
@@ -734,6 +866,54 @@ void MainWindow::onSwitchToLog()
     // Update window title
     setWindowTitle("SCOM-X - Log");
     
-    qDebug() << "[MainWindow] Switched to Log window";
+    debugLog("[MainWindow] Switched to Log window");
+    OperationLogger::instance().logPageSwitch("日志页面");
 }
+
+void MainWindow::onSwitchToReceiveData()
+{
+    // Hide AT Command page
+    if (atCommandPage) {
+        atCommandPage->setVisible(false);
+    }
+    
+    // Hide main components
+    ui->settingsGroupBox->setVisible(false);
+    ui->hotkeysGroupBox->setVisible(false);
+    ui->commandScrollArea->setVisible(false);
+    
+    // Show Receive Data page with proper geometry
+    if (receiveDataPage) {
+        receiveDataPage->setParent(centralWidget());
+        QRect contentRect = centralWidget()->rect();
+        receiveDataPage->setGeometry(contentRect);
+        
+        receiveDataPage->setVisible(true);
+        receiveDataPage->raise();
+        receiveDataPage->setFocus();
+    }
+    
+    // Update window title
+    setWindowTitle("SCOM-X - Receive Data");
+    
+    debugLog("[MainWindow] Switched to Receive Data window");
+    OperationLogger::instance().logPageSwitch("数据接收页面");
+}
+
+void MainWindow::onShowLogViewer()
+{
+    // 如果日志查看器还未创建，则创建它
+    if (!logViewerDialog) {
+        logViewerDialog = new LogViewerDialog(this);
+    }
+    
+    // 显示日志查看器窗口
+    logViewerDialog->show();
+    logViewerDialog->raise();
+    logViewerDialog->activateWindow();
+    
+    debugLog("[MainWindow] Opened Log Viewer");
+}
+
+
 

@@ -12,6 +12,9 @@ class SerialPort;
 class ConfigManager;
 class PreferencesDialog;
 class ATCommandPage;
+class LogPage;
+class ReceiveDataPage;
+class LogViewerDialog;
 
 // 前向声明 UI 类（由 Qt 自动生成）
 namespace Ui {
@@ -40,7 +43,6 @@ protected:
 private slots:
     // 串口相关槽
     void onConnectClicked();
-    void onDisconnectClicked();
     void onClearReceiveArea();
     void onRefreshPorts();
     
@@ -48,6 +50,7 @@ private slots:
     void onSwitchToMain();
     void onSwitchToATCommand();
     void onSwitchToLog();
+    void onSwitchToReceiveData();
     
     // 快捷指令槽
     void onQuickCommandButtonClicked(int index);
@@ -60,6 +63,7 @@ private slots:
     void onSettingsAction();
     void onAboutAction();
     void onPreferencesClicked();
+    void onShowLogViewer();  // 显示日志查看器
     
     // 串口信号处理
     void onConnectionStatusChanged(bool connected);
@@ -92,6 +96,15 @@ private:
     
     // AT Command 页面
     std::unique_ptr<ATCommandPage> atCommandPage;
+    
+    // Log 页面
+    std::unique_ptr<LogPage> logPage;
+    
+    // Receive Data 页面
+    std::unique_ptr<ReceiveDataPage> receiveDataPage;
+
+    // 日志查看器对话框
+    LogViewerDialog *logViewerDialog;
 
     // 动态创建的快捷指令组件（不在 UI 文件中定义）
     std::vector<QCheckBox*> commandCheckboxes;

@@ -30,6 +30,11 @@ set(SOURCES
     src/preferences_dialog.cpp
     src/splash_screen.cpp
     ui/pages/at_command_page.cpp
+    ui/pages/log_page.cpp
+    ui/pages/receive_data_page.cpp
+    ui/dialogs/log_viewer_dialog.cpp
+    src/log_manager.cpp
+    src/operation_logger.cpp
 )
 
 # 头文件
@@ -40,6 +45,11 @@ set(HEADERS
     include/preferences_dialog.h
     include/splash_screen.h
     include/at_command_page.h
+    include/log_page.h
+    include/receive_data_page.h
+    include/log_viewer_dialog.h
+    include/log_manager.h
+    include/operation_logger.h
 )
 
 # 资源文件

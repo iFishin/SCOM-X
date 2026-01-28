@@ -10,8 +10,35 @@
 #include "splash_screen.h"
 #include "palette.h"
 
+// 日志文件
+QFile *logFile = nullptr;
+
+void setupLogging()
+{
+    QString logPath = QDir::homePath() + "/.config/SCOM-X/debug.log";
+    QDir().mkpath(QDir::homePath() + "/.config/SCOM-X");
+    logFile = new QFile(logPath);
+    if (logFile->open(QIODevice::WriteOnly | QIODevice::Text | QIODevice::Append)) {
+        logFile->write(QString("\n========== 应用启动 %1 ==========\n").arg(QDateTime::currentDateTime().toString()).toLatin1());
+        logFile->flush();
+    }
+}
+
+void debugLog(const QString &msg)
+{
+    if (logFile && logFile->isOpen()) {
+        logFile->write(msg.toLatin1());
+        logFile->write("\n");
+        logFile->flush();
+    }
+    qDebug() << msg;
+}
+
 int main(int argc, char *argv[])
 {
+    setupLogging();
+    debugLog("[MAIN] 应用启动中...");
+    
     QApplication app(argc, argv);
 
     // 设置应用信息
@@ -55,9 +82,25 @@ int main(int argc, char *argv[])
     QThread::msleep(200);
 
     // 创建并显示主窗口
-    MainWindow window;
-    splash.finish(&window);  // 关闭启动画面并指定主窗口
-    window.show();
-
-    return app.exec();
+    debugLog("[MAIN] 开始创建 MainWindow...");
+    try {
+        MainWindow window;
+        debugLog("[MAIN] MainWindow 创建成功");
+        splash.finish(&window);  // 关闭启动画面并指定主窗口
+        debugLog("[MAIN] splash.finish() 完成");
+        window.show();
+        debugLog("[MAIN] window.show() 完成");
+        debugLog("[MAIN] 进入事件循环");
+        if (logFile) logFile->close();
+        return app.exec();
+    } catch (const std::exception &e) {
+        QString errMsg = QString("[CRITICAL] 创建 MainWindow 时异常: %1").arg(e.what());
+        debugLog(errMsg);
+        if (logFile) logFile->close();
+        return -1;
+    } catch (...) {
+        debugLog("[CRITICAL] 创建 MainWindow 时发生未知异常");
+        if (logFile) logFile->close();
+        return -1;
+    }
 }
