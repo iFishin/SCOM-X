@@ -186,8 +186,8 @@ void MainWindow::setupDynamicUI()
     loadTerminalHistory();
     
     // 添加日志查看器菜单项
-    QMenu *viewMenu = menuBar()->addMenu(tr("查看(&V)"));
-    QAction *logViewerAction = viewMenu->addAction(tr("程序日志(&L)"));
+    QMenu *viewMenu = menuBar()->addMenu(tr("View(&V)"));
+    QAction *logViewerAction = viewMenu->addAction(tr("EXE Log(&L)"));
     logViewerAction->setShortcut(Qt::CTRL | Qt::SHIFT | Qt::Key_L);
     connect(logViewerAction, &QAction::triggered, this, &MainWindow::onShowLogViewer);
 }
@@ -472,8 +472,10 @@ void MainWindow::loadSettings()
         return;
     }
 
-    // 加载串口设置（主界面显示）
-    ui->portComboBox->setCurrentText(configManager->getSerialPort());
+    // 刷新获取最新的可用串口列表
+    onRefreshPorts();
+
+    // 加载其他设置
     ui->baudRateSpinBox->setCurrentText(QString::number(configManager->getBaudRate()));
     ui->terminalHexMode->setChecked(configManager->getHexMode());
     ui->lineEndComboBox->setCurrentIndex(configManager->getLineEndIndex());
@@ -500,7 +502,6 @@ void MainWindow::loadSettings()
     }
 
     qDebug() << "[MainWindow] Settings loaded from ConfigManager";
-    onRefreshPorts();
 }
 
 void MainWindow::saveSettings()
@@ -511,7 +512,8 @@ void MainWindow::saveSettings()
         return;
     }
 
-    configManager->setSerialPort(ui->portComboBox->currentText());
+    // 注意：串口号不保存到配置文件，每次启动时重新扫描获取
+    // configManager->setSerialPort() - 已移除
     configManager->setBaudRate(ui->baudRateSpinBox->currentText().toInt());
     configManager->setHexMode(ui->terminalHexMode->isChecked());
     configManager->setLineEndIndex(ui->lineEndComboBox->currentIndex());
@@ -532,7 +534,7 @@ void MainWindow::saveSettings()
     settings.sync();
     configManager->saveConfig();
 
-    qDebug() << "[MainWindow] Settings saved to ConfigManager and QSettings";
+    qDebug() << "[MainWindow] Settings saved to ConfigManager and QSettings (serial port not saved)";
 }
 
 void MainWindow::onQuickCommandButtonClicked(int index)
@@ -576,10 +578,10 @@ void MainWindow::onSettingsAction()
 
 void MainWindow::onAboutAction()
 {
-    QMessageBox::about(this, "关于 SCOM-X",
-                       "SCOM-X - 串口通信工具\n"
-                       "版本: 1.0.0\n\n"
-                       "一个功能强大的串口通信工具，支持多种数据格式和快捷指令。");
+    QMessageBox::about(this, "About SCOM-X",
+                       "SCOM-X\n"
+                       "Ver: 1.0.0\n\n"
+                       "A serial communication tool rewrite with CPP, suitable for development and debugging.");
 }
 
 void MainWindow::onPreferencesClicked()

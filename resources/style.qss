@@ -74,7 +74,7 @@ QPushButton{
     color:${selectText};
     border:1px solid ${primary};
     border-radius:4px;
-    padding:8px 16px;
+    padding:8px 8px;
     font-weight:600;
     font-size:12px;
 }
@@ -265,12 +265,10 @@ QCheckBox::indicator,QRadioButton::indicator{
     height: 18px;
     border-radius: 8px;
     border:2px solid ${border};
-    background-color:${bgCard};
 }
 
 QCheckBox::indicator:checked,QRadioButton::indicator:checked{
     background-color:${primary};
-    border-color:${primary};
 }
 
 QCheckBox::indicator:hover,QRadioButton::indicator:hover{
@@ -283,7 +281,6 @@ QCheckBox:disabled,QRadioButton:disabled{
 
 QCheckBox#commandRowCheckbox::indicator:hover {
     border-color: ${borderDark};
-    background-color: ${bgHover};
 }
 
 QCheckBox#commandRowCheckbox::indicator:checked {
@@ -301,7 +298,6 @@ QCheckBox#commandHexCheckbox::indicator {
     width: 18px;
     height: 18px;
     border: 2px solid ${border};
-    background-color: ${bgCard};
     border-radius: 4px;
 }
 
@@ -324,7 +320,6 @@ QCheckBox#commandEndCheckbox::indicator {
     width: 18px;
     height: 18px;
     border: 2px solid ${border};
-    background-color: ${bgCard};
     border-radius: 4px;
 }
 
@@ -333,7 +328,6 @@ QCheckBox#commandEndCheckbox::indicator:hover {
 }
 
 QCheckBox#commandEndCheckbox::indicator:checked {
-    background-color: ${primary};
     border-color: ${primary};
 }
 
@@ -373,6 +367,12 @@ QGroupBox::title{
     top:4px;
     padding:0 4px;
     background-color: ${bgBase};
+}
+
+/* ===== 滑动区域 ===== */
+QScrollArea#pathScrollArea { 
+    border: none; 
+    background-color: transparent; 
 }
 
 /* ===== 滚动条 ===== */

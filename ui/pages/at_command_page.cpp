@@ -298,9 +298,6 @@ void ATCommandPage::initializePathSelector()
 
 void ATCommandPage::setupConnections()
 {
-    connect(ui->saveButton, &QPushButton::clicked, this, &ATCommandPage::onSaveClicked);
-    connect(ui->importButton, &QPushButton::clicked, this, &ATCommandPage::onImportClicked);
-    connect(ui->expandButton, &QPushButton::clicked, this, &ATCommandPage::onExpandClicked);
     connect(ui->commandTextEdit, &QTextEdit::textChanged, this, &ATCommandPage::onTextChanged);
     
     qDebug() << "[ATCommandPage] Connections established";
@@ -385,9 +382,7 @@ void ATCommandPage::onImportClicked()
 
 void ATCommandPage::onExpandClicked()
 {
-    bool visible = ui->pathScrollArea->isVisible();
-    ui->pathScrollArea->setVisible(!visible);
-    qDebug() << "[ATCommandPage] Path panel toggled:" << !visible;
+    // This function is no longer used - expand button removed from UI
 }
 
 void ATCommandPage::onRadioButtonToggled(int index, bool checked)
@@ -449,12 +444,8 @@ QString ATCommandPage::getATCommandFilePath() const
 
 void ATCommandPage::updateFileStatus()
 {
-    QString statusText = getATCommandFilePath();
-    if (textModified) {
-        statusText += " *";
-    }
-    
-    ui->fileStatusLabel->setText(statusText);
+    // File status label has been removed from UI
+    // This function is kept for compatibility but does nothing
 }
 
 void ATCommandPage::setPathRadioButtonChecked(int index)
